@@ -22,7 +22,6 @@ import scvi
 import tempfile
 import botocore
 import torch
-from scvi.hub import HubModel
 import gzip
 from sklearn.ensemble import RandomForestClassifier
 #datasets = ["lau","lim","nagy","pineda","rosmap","velmeshev"]
@@ -32,41 +31,64 @@ import scf
 from scf import *
 # Set pandas to display all columns
 pd.set_option('display.max_columns', None)
-CENSUS_VERSION = "2024-07-01"
-census = cellxgene_census.open_soma(census_version=CENSUS_VERSION)
-sc.set_figure_params(figsize=(10, 10), frameon=False)
-torch.set_float32_matmul_precision("high")
+version = "2024-07-01"
 scvi.settings.seed = 0
+torch.set_float32_matmul_precision("high")
+sc.set_figure_params(figsize=(10, 10), frameon=False)
 print("Last run with scvi-tools version:", scvi.__version__)
-#save_dir = tempfile.TemporaryDirectory()
-organism = "homo sapiens"
-#query_tissue = "cortex"
-pd.set_option('display.max_rows', None)  # Show all rows
-pd.set_option('display.max_columns', None)  #
+sys.path.append('/app') 
+import adata_functions
 
-#outdir = organism + - + census_verion
-#outdir doesnt exist
-   # os.makedirs(outdir) 
-    ## Open the CellxGene census
-#if "model.pt: file not in outdir:
-    #census = cellxgene_census.open_soma(census_version=CENSUS_VERSION)
+def setup(organism, version="2024-07-01"):
+    census = cellxgene_census.open_soma(census_version=version)
+    outdir = f"{organism}-{version}"  # Concatenate strings using f-string
 
-    ## Get scVI model info
-    #scvi_info = cellxgene_census.experimental.get_embedding_metadata_by_name(
-        #embedding_name="scvi",
-        #organism=organism.replace(" ", "_"),  
-        #census_version=CENSUS_VERSION,
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    # Check if the model file exists
+    model_file_path = os.path.join(outdir, "model.pt")
+    if not os.path.exists(model_file_path):
+        # Get scVI model info
+        scvi_info = cellxgene_census.experimental.get_embedding_metadata_by_name(
+            embedding_name="scvi",
+            organism=organism.replace(" ", "_"),
+            census_version=census_version,
+        )
+
+        # Extract the model link
+        model_link = scvi_info["model_link"]
+        date = model_link.split("/")[5]
+        url = os.path.join("https://cellxgene-contrib-public.s3.us-west-2.amazonaws.com/models/scvi/", date, organism, "model.pt")
+
+        # Download the model using wget if it doesn't already exist
+        subprocess.run(["wget", "--no-check-certificate", "-q", "-O", model_file_path, url])
+    else:
+        print(f"File already exists at {model_file_path}, skipping download.")
+
+    return(model_file_path)
+    ## Get observations for the brain tissue
+    #brain_obs = cellxgene_census.get_obs(census, organism,
+        #value_filter=(
+            #"tissue_general == 'brain' and "
+            #"is_primary_data == True and "
+            #"disease == 'normal'"
+        #)
     #)
+    #return brain_obs
 
-    ## Extract the model link
-    #model_link = scvi_info["model_link"]
-    #date=str.split(model_link,"/")[5]
-    #url = os.path.join("https://cellxgene-contrib-public.s3.us-west-2.amazonaws.com/models/scvi/",date,organism,"model.pt")
 
-    ## Download the model using wget if it doesn't already exist
-    #subprocess.run(["!wget --no-check-certificate -q -O", url, "-O", os.path.join(outdir,"model.pt")])
-#else:
-    #print(f"File already exists at {outdir}, skipping download.")
+
+
+
+
+
+
+
+
+
+
 
 
 # %%
@@ -135,11 +157,13 @@ adata.obsm["scvi"] = latent
 adata.obs["tissue"] = "prefrontal cortex"
 adata.obs["tissue_general"] = "brain"
 
+
+sc.pp.normalize_total(adata, target_sum=1e4)
+sc.pp.log1p(adata)
 sc.pp.neighbors(adata, n_neighbors=30, use_rep="scvi")
 sc.tl.umap(adata)
 sc.tl.leiden(adata)
-sc.pp.normalize_total(adata, target_sum=1e4)
-sc.pp.log1p(adata)
+
 #sc.pl.umap(adata, color=["leiden","Disease","cell_type"])
 adata.var_names= adata.var["gene_id"]
 adata.obs["dataset_id"] = "QUERY"
