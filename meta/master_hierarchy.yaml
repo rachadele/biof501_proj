@@ -1,0 +1,61 @@
+root:
+  colname: NA
+  children:
+    - name: GABAergic
+      colname: rachel_family
+      children:
+        - name: CGE
+          colname: rachel_class
+          children:
+            - name: LAMP5
+              colname: rachel_subclass
+            - name: VIP
+              colname: rachel_subclass
+            - name: SNCG
+              colname: rachel_subclass
+        - name: MGE
+          colname: rachel_class
+          children:
+            - name: PVALB
+              colname: rachel_subclass
+            - name: SST
+              colname: rachel_subclass
+            - name: Chandelier
+              colname: rachel_subclass
+    - name: Glutamatergic
+      colname: rachel_family
+      children:
+        - name: L2/3-6 IT
+          colname: rachel_class
+        - name: deep layer non-IT
+          colname: rachel_class
+          children:
+            - name: L5 ET
+              colname: rachel_subclass
+            - name: L5/6 NP
+              colname: rachel_subclass
+            - name: L6 CT
+              colname: rachel_subclass
+            - name: L6b
+              colname: rachel_subclass
+    - name: Non-neuron
+      colname: rachel_family
+      children:
+        - name: Oligodendrocyte lineage
+          colname: rachel_class
+          children:
+            - name: Oligodendrocyte
+              colname: rachel_subclass
+            - name: OPC
+              colname: rachel_subclass
+        - name: Astrocyte
+          colname: rachel_class
+        - name: Immune/Vasculature
+          colname: rachel_class
+          children:
+            - name: Pericyte
+              colname: rachel_subclass
+            - name: VLMC
+              colname: rachel_subclass
+            - name: Endothelial
+              colname: rachel_subclass
