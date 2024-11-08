@@ -6,8 +6,9 @@ cellxgene-census
 cellxgene-census[experimental]
 leidenalg
 python-igraph
-scvi
+scvi-tools
 scipy
 botocore
 torch
 scikit-learn
+networkx

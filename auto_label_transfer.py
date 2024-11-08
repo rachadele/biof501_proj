@@ -25,15 +25,8 @@ import botocore
 import torch
 import gzip
 from sklearn.ensemble import RandomForestClassifier
-projPath="/space/grp/rschwartz/rschwartz/census-stuff"
 import adata_functions
 from adata_functions import *
-import pandas as pd
-import numpy as np
-import scanpy as sc
-import random
-import cellxgene_census
-import cellxgene_census.experimental
 projPath = "."
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -44,9 +37,11 @@ import anytree
 from anytree import Node, RenderTree
 from anytree.importer import DictImporter
 
+
+
+
 # Set pandas to display all columns
 pd.set_option('display.max_columns', None)
-version = "2024-07-01"
 #scvi.settings.seed = 0
 torch.set_float32_matmul_precision("high")
 sc.set_figure_params(figsize=(10, 10), frameon=False)
@@ -56,6 +51,12 @@ organism="homo_sapiens"
 # Keys for harmonized labels at 3 levels of granularity
 ref_keys = ["rachel_family","rachel_class","rachel_subclass"]
 
+random.seed(1)
+census_version="2024-07-01"
+organism="homo_sapiens"
+subsample=50
+split_column="tissue"
+dims=20
 
 # %%
 def setup(organism="homo_sapiens", version="2024-07-01"):
@@ -94,12 +95,10 @@ def setup(organism="homo_sapiens", version="2024-07-01"):
 # Set random seed for reproducibility of subsampling
 # Should I pass this to individual functions?
 importlib.reload(adata_functions)
-
-random.seed(1)
-setup(organism="homo_sapiens", version="2024-07-01")
+census = cellxgene_census.open_soma(census_version=census_version)
 
 refs=adata_functions.get_census(organism="homo_sapiens", 
-                                census_version=version, subsample=50, split_column="tissue", dims=20)
+                                census=census, subsample=50, split_column="tissue", dims=20)
 
 test_names=["Cortical brain samples from C9-ALS, C9-ALS/FTD, C9-FTD patients and age matched controls"]
 tests=get_test_data(census_version=version, test_names=test_names, subsample=500)

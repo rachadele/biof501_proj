@@ -114,8 +114,8 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
 
     return refs
 
-def get_census(organism="homo_sapiens", census_version="2024-07-01", subsample=500, split_column="dataset_id", dims=20):
-    census = cellxgene_census.open_soma(census_version=census_version)
+def get_census(census, organism="homo_sapiens", subsample=500, split_column="tissue", dims=20):
+
     
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
     brain_obs = cellxgene_census.get_obs(census, organism,
@@ -177,7 +177,7 @@ def get_census(organism="homo_sapiens", census_version="2024-07-01", subsample=5
         dataset_title = name.replace(" ", "_")
         for col in ref.obs.columns:
             ref.obs[col] = pd.Categorical(ref.obs[col], categories=ref.obs[col].unique())
-        p = sc.pl.umap(ref, color=["rachel_subclass", "cell_type","collection_name"])
+        p = sc.pl.umap(ref, color=["rachel_subclass", "tissue","collection_name"])
         sc.savefig(f"{projPath}/refs/census/{dataset_title}_{subsample}_umap.png", dpi=300, bbox_inches='tight')
 
         meta = ref.obs[["cell_type", "rachel_class", "rachel_subclass", "rachel_family"]].drop_duplicates()
@@ -307,9 +307,7 @@ def get_valid_label(original_label, query_labels, tree):
         else:
             return None  # Return None if no valid parent found
         
-def get_test_data(census_version, test_names, subsample=500):
-    
-    census = cellxgene_census.open_soma(census_version=census_version)
+def get_test_data(census, test_names, subsample=500):
     
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
     brain_obs = cellxgene_census.get_obs(census, organism,
