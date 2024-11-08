@@ -14,9 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import label_binarize
 import yaml
-import anytree
-from anytree import Node, RenderTree
-from anytree.importer import DictImporter
+
 
 # Subsample x cells from each cell type if there are n>x cells present
 #ensures equal representation of cell types in reference
@@ -49,8 +47,8 @@ def relabel(adata, relabel_path, join_key, sep="\t"):
     if join_key not in relabel_df.columns:
         raise ValueError(f"{join_key} not found in relabel DataFrame.")
     # Perform the left join to update the metadata
-    adata.obs = adata.obs.merge(relabel_df, on=join_key, how='left', suffixes=(None, "y"))
-    columns_to_drop = [col for col in adata.obs.columns if col.endswith('y')]
+    adata.obs = adata.obs.merge(relabel_df, on=join_key, how='left', suffixes=(None, "_y"))
+    columns_to_drop = [col for col in adata.obs.columns if col.endswith('_y')]
     adata.obs.drop(columns=columns_to_drop, inplace=True)
     return adata
 
@@ -87,8 +85,6 @@ def extract_data(data, filtered_ids, subsample=500, organism=None, census=None,
     # Assuming relabel_wrapper is defined
     adata = relabel(adata, relabel_path=relabel_path, join_key="cell_type", sep='\t')
     # Convert all columns in adata.obs to factors (categorical type in pandas)
-    for col in adata.obs.columns:
-        adata.obs[col] = pd.Categorical(adata.obs[col], categories=adata.obs[col].unique())
     return adata
 
 def split_and_extract_data(data, split_column, subsample=500, organism=None, census=None, cell_columns=None, dataset_info=None, dims=20):
@@ -114,9 +110,9 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
 
     return refs
 
-def get_census(census, organism="homo_sapiens", subsample=500, split_column="tissue", dims=20):
+def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=500, split_column="tissue", dims=20):
 
-    
+    census = cellxgene_census.open_soma(census_version=census_version)
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
     brain_obs = cellxgene_census.get_obs(census, organism,
         value_filter=(
@@ -125,8 +121,8 @@ def get_census(census, organism="homo_sapiens", subsample=500, split_column="tis
             "disease == 'normal'"
         ))
     
-    brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"y"))
-    brain_obs.drop(columns=['soma_joinidy'], inplace=True)
+    brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
+    brain_obs.drop(columns=['soma_joinid_y'], inplace=True)
     # Filter based on organism
     if organism == "homo_sapiens":
         brain_obs_filtered = brain_obs[
@@ -176,9 +172,12 @@ def get_census(census, organism="homo_sapiens", subsample=500, split_column="tis
     for name, ref in refs.items():
         dataset_title = name.replace(" ", "_")
         for col in ref.obs.columns:
-            ref.obs[col] = pd.Categorical(ref.obs[col], categories=ref.obs[col].unique())
+    # Convert to Categorical and remove unused categories
+            ref.obs[col] = pd.Categorical(ref.obs[col].cat.remove_unused_categories())
+            #ref.obs[col].inplace=True
         p = sc.pl.umap(ref, color=["rachel_subclass", "tissue","collection_name"])
-        sc.savefig(f"{projPath}/refs/census/{dataset_title}_{subsample}_umap.png", dpi=300, bbox_inches='tight')
+        breakpoint
+        # sc.savefig(f"{projPath}/refs/census/{dataset_title}_{subsample}_umap.png", dpi=300, bbox_inches='tight')
 
         meta = ref.obs[["cell_type", "rachel_class", "rachel_subclass", "rachel_family"]].drop_duplicates()
         meta.to_csv(f"{projPath}/meta/relabel/{dataset_title}_relabel.tsv", sep="\t", index=False)
@@ -187,20 +186,21 @@ def get_census(census, organism="homo_sapiens", subsample=500, split_column="tis
 
 
 
-def process_adata_query(adata_query, tissue="prefrontal cortex", dataset_id="QUERY", dataset_title=None, batch_key="sample",
+def process_adata_query(adata_query, tissue="frontal cortex", dataset_id="QUERY", dataset_title=None, batch_key="sample",
                         model_file_path=os.path.join(projPath, "scvi-human-2024-07-01")):
     # Ensure the input AnnData object is valid
     if not isinstance(adata_query, ad.AnnData):
         raise ValueError("Input must be an AnnData object.")
 
     # Assign ensembl_id to var
-    adata_query.var["ensembl_id"] = adata_query.var.index
-    adata_query.obs["n_counts"] = adata_query.X.sum(axis=1)
-    adata_query.obs["joinid"] = list(range(adata_query.n_obs))
-    adata_query.obs["batch"] = adata_query.obs[batch_key]
+    #adata_query.var["ensembl_id"] = adata_query.var["feature_id"]
+    adata_query.var.set_index("feature_id", inplace=True)
+    #adata_query.obs["n_counts"] = adata_query.X.sum(axis=1)
+    #adata_query.obs["joinid"] = list(range(adata_query.n_obs))
+    #adata_query.obs["batch"] = adata_query.obs[batch_key]
 
     # Filter out missing HGNC features
-    adata_query = adata_query[:, adata_query.var["gene_name"].notnull().values].copy()
+    adata_query = adata_query[:, adata_query.var["feature_name"].notnull().values].copy()
 
     # Prepare the query AnnData for scVI
     scvi.model.SCVI.prepare_query_anndata(adata_query, model_file_path)
@@ -212,11 +212,11 @@ def process_adata_query(adata_query, tissue="prefrontal cortex", dataset_id="QUE
     adata_query.obsm["scvi"] = latent
 
     # Add tissue information and dataset identifiers
-    adata_query.obs["tissue"] = tissue
-    adata_query.obs["tissue_general"] = "brain"
-    adata_query.var_names = adata_query.var["gene_id"]
-    adata_query.obs["dataset_id"] = dataset_id
-    adata_query.obs["dataset_title"] = dataset_title
+    #adata_query.obs["tissue"] = tissue
+    #adata_query.obs["tissue_general"] = "brain"
+    #adata_query.var_names = adata_query.var["gene_id"]
+    #adata_query.obs["dataset_id"] = dataset_id
+    #adata_query.obs["dataset_title"] = dataset_title
 
     # Compute neighbors and UMAP
     sc.pp.neighbors(adata_query, n_neighbors=30, use_rep="scvi")
@@ -226,6 +226,20 @@ def process_adata_query(adata_query, tissue="prefrontal cortex", dataset_id="QUE
     return adata_query
 
 
+
+# Function to find the parent label with positive samples
+def find_parent_with_positive_samples(label, true_labels, class_labels, tree):
+    current_label = label
+    while current_label is not None:
+        # Check if the current label has any positive samples in the true labels
+        class_index = np.where(class_labels == current_label)[0]
+        if class_index.size > 0 and true_labels[:, class_index[0]].sum() > 0:
+            return current_label  # Found a valid label with positive samples
+        
+        # Move to the parent label
+        current_label = tree.get(current_label)
+    
+    return None  # No valid parent found
 
 
 def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None):
@@ -255,6 +269,8 @@ def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None
             else:
                 optimal_idx = np.argmax(tpr - fpr)
                 optimal_threshold = thresholds[optimal_idx]
+                if optimal_threshold == float('inf'):
+                    optimal_threshold = 0 
             optimal_thresholds[class_label] = optimal_threshold
 
         # Plot ROC for all classes
@@ -267,6 +283,7 @@ def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None
         
         # Assign predictions based on optimal thresholds
         predicted_classes = []
+        max_probs = []
         for i in range(adata_query.n_obs):
             class_probs = probabilities[i]
             max_class = "unknown"
@@ -275,6 +292,7 @@ def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None
                 if class_probs[j] >= optimal_thresholds[class_label] and class_probs[j] > max_prob:
                     max_class = class_label
                     max_prob = class_probs[j]
+            max_probs.append(max_prob)
             predicted_classes.append(max_class)
         
         # Store predictions and confidence in `adata_query`
@@ -287,28 +305,30 @@ def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None
                                     labels=class_labels))
 
         # Plot UMAP with classified cell types
-        sc.pl.umap(adata_query, color=["dataset_title", "predicted_" + key, "Cell_type"], 
+        sc.pl.umap(adata_query, color=["confidence", "predicted_" + key, key], 
                    ncols=1, na_in_legend=True, legend_fontsize=20)
 
 
 
 
-# Recursively find label at the appropriate level of granularity
-def get_valid_label(original_label, query_labels, tree):
-    # Check if the original label is in the query set
-    if original_label in query_labels:
-        return original_label  # Return the original label if it's valid
-    else:
-        # Look up the node in the tree
-        node = find_by_attr(tree, name=original_label)
-        # If node is found and it's not the root, check the parent recursively
-        if node is not None and node.parent is not None:
-            return get_valid_label(node.parent.name, query_labels, tree)
-        else:
-            return None  # Return None if no valid parent found
-        
-def get_test_data(census, test_names, subsample=500):
+def find_valid_label(tree, current_label):
+    if current_label in tree:
+        # If the current label exists, return it
+        return tree[current_label]
     
+    # Check for parent if the current label is not found at this level
+    for key, value in tree.items():
+        if isinstance(value, dict):
+            # Recurse deeper if there's a nested structure
+            result = find_valid_label(value, current_label)
+            if result:
+                return result
+    return None  # If no valid label is found
+
+
+        
+def get_test_data(census_version, test_names, subsample=500):
+    census = cellxgene_census.open_soma(census_version=census_version)
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
     brain_obs = cellxgene_census.get_obs(census, organism,
         value_filter=(
@@ -316,10 +336,10 @@ def get_test_data(census, test_names, subsample=500):
             "is_primary_data == True"
         ))
     
-    brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"y"))
-    brain_obs.drop(columns=['soma_joinidy'], inplace=True)
+    brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
+    brain_obs.drop(columns=['soma_joinid_y'], inplace=True)
     # Filter based on organism
-    test_obs = brain_obs[brain_obs['collection_name'].isin([test_names])]
+    test_obs = brain_obs[brain_obs['collection_name'].isin(test_names)]
     subsample_ids = random.sample(list(test_obs["soma_joinid"]), subsample)
     # Adjust organism naming for compatibility
     organism_name_mapping = {
@@ -333,7 +353,9 @@ def get_test_data(census, test_names, subsample=500):
         "disease", "dataset_id", "development_stage",
         "soma_joinid"
     ]
+    
     # Example usage
+    random.seed(1)
     test = cellxgene_census.get_anndata(
             census=census,
             organism=organism,
@@ -343,12 +365,16 @@ def get_test_data(census, test_names, subsample=500):
           #  obs_column_names=cell_columns,
             obs_coords=subsample_ids)
    # test= relabel(test, relabel_test_path)
-    test.obs= test.obs.merge(dataset_info,  on="dataset_id", suffixes=(None,"y"))
-    columns_to_drop = [col for col in test.obs.columns if col.endswith('y')]
+    test.obs= test.obs.merge(dataset_info,  on="dataset_id", suffixes=(None,"_y"))
+    columns_to_drop = [col for col in test.obs.columns if col.endswith('_y')]
     test.obs.drop(columns=columns_to_drop, inplace=True)
+    test= relabel(test,relabel_path=os.path.join(projPath,"meta","relabel","gittings_relabel.tsv.gz"),
+                            join_key="observation_joinid",sep="\t")
+    # Remove rows where 'rachel_family' is NA in the 'test' AnnData object
+    test = test[~test.obs['rachel_family'].isna(), :]
     return test
 
-def split_anndata_by_obs(adata, obs_key="dataset_name"):
+def split_anndata_by_obs(adata, obs_key="dataset_title"):
     """
     Split an AnnData object into multiple AnnData objects based on unique values in an obs key.
 
@@ -366,3 +392,85 @@ def split_anndata_by_obs(adata, obs_key="dataset_name"):
     }
     
     return split_data
+
+# Define the hierarchical structure as a dictionary with colnames and labels
+tree = {
+    "GABAergic": {
+        "colname": "rachel_family",
+        "CGE": {
+            "colname": "rachel_class",
+            "LAMP5": {
+                "colname": "rachel_subclass"
+            },
+            "VIP": {
+                "colname": "rachel_subclass"
+            },
+            "SNCG": {
+                "colname": "rachel_subclass"
+            }
+        },
+        "MGE": {
+            "colname": "rachel_class",
+            "PVALB": {
+                "colname": "rachel_subclass"
+            },
+            "SST": {
+                "colname": "rachel_subclass"
+            },
+            "Chandelier": {
+                "colname": "rachel_subclass"
+            }
+        }
+    },
+    "Glutamatergic": {
+        "colname": "rachel_family",
+        "L2/3-6 IT": {
+            "colname": "rachel_class"
+        },
+        "deep layer non-IT": {
+            "colname": "rachel_class",
+            "L5 ET": {
+                "colname": "rachel_subclass"
+            },
+            "L5/6 NP": {
+                "colname": "rachel_subclass"
+            },
+            "L6 CT": {
+                "colname": "rachel_subclass"
+            },
+            "L6b": {
+                "colname": "rachel_subclass"
+            }
+        }
+    },
+    "Non-neuron": {
+        "colname": "rachel_family",
+        "Oligodendrocyte lineage": {
+            "colname": "rachel_class",
+            "Oligodendrocyte": {
+                "colname": "rachel_subclass"
+            },
+            "OPC": {
+                "colname": "rachel_subclass"
+            }
+        },
+        "Astrocyte": {
+            "colname": "rachel_class"
+        },
+        "Immune/Vasculature": {
+            "colname": "rachel_class",
+            "Pericyte": {
+                "colname": "rachel_subclass"
+            },
+            "VLMC": {
+                "colname": "rachel_subclass"
+            },
+            "Endothelial": {
+                "colname": "rachel_subclass"
+            }
+        }
+    }
+}
+
+# Define a recursive function to find a valid label
+
