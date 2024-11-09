@@ -76,7 +76,7 @@ def extract_data(data, filtered_ids, subsample=500, organism=None, census=None,
     #sc.pp.highly_variable_genes(adata, n_top_genes=2000)
     #sc.tl.pca(adata, n_comps=dims)
     sc.pp.neighbors(adata, use_rep="scvi",n_neighbors=30)
-    #sc.tl.leiden(adata_query)
+    #sc.tl.leiden(query)
     sc.tl.umap(adata)
     # Merging metadata with dataset_info
     newmeta = adata.obs.merge(dataset_info, on="dataset_id", suffixes=(None,"y"))
@@ -172,8 +172,9 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
     for name, ref in refs.items():
         dataset_title = name.replace(" ", "_")
         for col in ref.obs.columns:
+            if ref.obs[col].dtype.name =='category':
     # Convert to Categorical and remove unused categories
-            ref.obs[col] = pd.Categorical(ref.obs[col].cat.remove_unused_categories())
+                ref.obs[col] = pd.Categorical(ref.obs[col].cat.remove_unused_categories())
             #ref.obs[col].inplace=True
         p = sc.pl.umap(ref, color=["rachel_subclass", "tissue","collection_name"])
         breakpoint
@@ -186,74 +187,133 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
 
 
 
-def process_adata_query(adata_query, tissue="frontal cortex", dataset_id="QUERY", dataset_title=None, batch_key="sample",
+def process_query(query, tissue="frontal cortex", dataset_id="QUERY", dataset_title=None, batch_key="sample", projPath=".",
                         model_file_path=os.path.join(projPath, "scvi-human-2024-07-01")):
     # Ensure the input AnnData object is valid
-    if not isinstance(adata_query, ad.AnnData):
+    if not isinstance(query, ad.AnnData):
         raise ValueError("Input must be an AnnData object.")
 
     # Assign ensembl_id to var
-    #adata_query.var["ensembl_id"] = adata_query.var["feature_id"]
-    adata_query.var.set_index("feature_id", inplace=True)
-    #adata_query.obs["n_counts"] = adata_query.X.sum(axis=1)
-    #adata_query.obs["joinid"] = list(range(adata_query.n_obs))
-    #adata_query.obs["batch"] = adata_query.obs[batch_key]
+    #query.var["ensembl_id"] = query.var["feature_id"]
+    if "feature_id" in query.var.columns:
+        query.var.set_index("feature_id", inplace=True)
+
+    
+    query.obs["n_counts"] = query.X.sum(axis=1)
+    query.obs["joinid"] = list(range(query.n_obs))
+    query.obs["batch"] = query.obs[batch_key]
 
     # Filter out missing HGNC features
-    adata_query = adata_query[:, adata_query.var["feature_name"].notnull().values].copy()
+    query = query[:, query.var["feature_name"].notnull().values].copy()
 
     # Prepare the query AnnData for scVI
-    scvi.model.SCVI.prepare_query_anndata(adata_query, model_file_path)
-    vae_q = scvi.model.SCVI.load_query_data(adata_query, model_file_path)
+    scvi.model.SCVI.prepare_query_anndata(query, model_file_path)
+    vae_q = scvi.model.SCVI.load_query_data(query, model_file_path)
 
     # Set the model to trained and get latent representation
     vae_q.is_trained = True
     latent = vae_q.get_latent_representation()
-    adata_query.obsm["scvi"] = latent
+    query.obsm["scvi"] = latent
 
     # Add tissue information and dataset identifiers
-    #adata_query.obs["tissue"] = tissue
-    #adata_query.obs["tissue_general"] = "brain"
-    #adata_query.var_names = adata_query.var["gene_id"]
-    #adata_query.obs["dataset_id"] = dataset_id
-    #adata_query.obs["dataset_title"] = dataset_title
+    #query.obs["tissue"] = tissue
+    #query.obs["tissue_general"] = "brain"
+    #query.var_names = query.var["gene_id"]
+    #query.obs["dataset_id"] = dataset_id
+    #query.obs["dataset_title"] = dataset_title
 
     # Compute neighbors and UMAP
-    sc.pp.neighbors(adata_query, n_neighbors=30, use_rep="scvi")
-    sc.tl.umap(adata_query)
-    sc.tl.leiden(adata_query)
+    sc.pp.neighbors(query, n_neighbors=30, use_rep="scvi")
+    sc.tl.umap(query)
+    sc.tl.leiden(query)
 
-    return adata_query
+    return query
 
 
+# Function to find a node's parent in the tree
+def find_parent_label(tree, target_label, current_path=None):
+    if current_path is None:
+        current_path = []
+    for key, value in tree.items():
+        # Add the current node to the path
+        current_path.append(key)
+        # If we found the target, return the parent label if it exists
+        if key == target_label:
+            if len(current_path) > 1:
+                return current_path[-2]  # Return the parent label
+            else:
+                return None  # No parent if we're at the root
+        # Recurse into nested dictionaries if present
+        if isinstance(value, dict):
+       #     print(value)
+            result = find_parent_label(value, target_label, current_path)
+           # print(result)
+            if result:
+                return result
+        # Remove the current node from the path after processing
+        current_path.pop()
+    return None
 
-# Function to find the parent label with positive samples
-def find_parent_with_positive_samples(label, true_labels, class_labels, tree):
-    current_label = label
-    while current_label is not None:
-        # Check if the current label has any positive samples in the true labels
-        class_index = np.where(class_labels == current_label)[0]
-        if class_index.size > 0 and true_labels[:, class_index[0]].sum() > 0:
-            return current_label  # Found a valid label with positive samples
-        
-        # Move to the parent label
-        current_label = tree.get(current_label)
+# Recursive function to get the closest valid label
+def get_valid_label(original_label, query_labels, tree):
+    # Base case: if the label exists in query, return it
+    if original_label in query_labels:
+        return original_label
+    # Find the parent label in the tree
+    parent_label = find_parent_label(tree, original_label)
+    # Recursively check the parent label if it exists
+    if parent_label:
+        return get_valid_label(parent_label, query_labels, tree)
+    else:
+        return None  # Return None if no valid parent found
+
+# Example usage
+
+def map_valid_labels(ref, query, tree, ref_keys):
     
-    return None  # No valid parent found
+    query_labels=pd.concat([query.obs[key] for key in ref_keys]).unique()
+    ref_labels = pd.concat([ref.obs[key] for key in ref_keys]).unique()
+    
+    # if reference label is not in any of the query labels at any level, replace with parent
+    # this accounts for queries without detailed subtypes
+    # e.g. lau: can only evaluate at the "rachel_class" level
+    for ref_label in ref_labels:
+        new_label = get_valid_label(ref_label, query_labels, tree)
+        # Replace all instances of ref_label with new_label in ref
+      #  if new_label:
+        for key in ref_keys:
+                # Replace ref_label with new_label in ref
+            ref.obs[key] = ref.obs[key].replace(ref_label, new_label)
+    
+    # if query label not in reference, don't evaluate
+    # e.g. "Chandelier" is not in some of the references, and will likely be
+    # annotated as some other GABAergic type
+    # what do in this situation?
+    # change to "GABAergic" in query?
+    # this likely won't help, since other valid subclass labels already exist in the query
+    # best solution is to not evaluate
+    for query_label in query_labels:
+        if query_label not in ref_labels:
+            query.obs[key] = query.obs[key].replace(query_label, None)
+    
+    return ref,query
 
 
-def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None):
+def classify_cells(ref, query, ref_keys, tree, specified_threshold=None):
+    metrics = {}
+    ref,query = map_valid_labels(ref, query, tree, ref_keys)
+    
     for key in ref_keys:
         # Train the random forest classifier on the census data
         rfc = RandomForestClassifier()
-        rfc.fit(adata_census.obsm["scvi"], adata_census.obs[key].values)
+        rfc.fit(ref.obsm["scvi"], ref.obs[key].values)
         
         # Predict probabilities for each class in the query data
-        probabilities = rfc.predict_proba(adata_query.obsm["scvi"])
+        probabilities = rfc.predict_proba(ref.obsm["scvi"])
         class_labels = rfc.classes_
         
         # Binarize the class labels for multiclass ROC computation
-        true_labels = label_binarize(adata_query.obs[key].values, classes=class_labels)
+        true_labels = label_binarize(query.obs[key].values, classes=class_labels)
         
         # Find the optimal threshold for each class
         optimal_thresholds = {}
@@ -283,51 +343,39 @@ def classify_cells(adata_census, adata_query, ref_keys, specified_threshold=None
         
         # Assign predictions based on optimal thresholds
         predicted_classes = []
-        max_probs = []
-        for i in range(adata_query.n_obs):
+        #max_probs = []
+        for i in range(query.n_obs):
             class_probs = probabilities[i]
             max_class = "unknown"
             max_prob = 0.0
             for j, class_label in enumerate(class_labels):
+                
                 if class_probs[j] >= optimal_thresholds[class_label] and class_probs[j] > max_prob:
                     max_class = class_label
                     max_prob = class_probs[j]
-            max_probs.append(max_prob)
+            #max_probs.append(max_prob)
             predicted_classes.append(max_class)
         
-        # Store predictions and confidence in `adata_query`
-        adata_query.obs["predicted_" + key] = predicted_classes
-        adata_query.obs["confidence"] = np.max(probabilities, axis=1)
+        # Store predictions and confidence in `query`
+        query.obs["predicted_" + key] = predicted_classes
+        query.obs["confidence"] = np.max(probabilities, axis=1)
         
         # Classification report for predictions
-        print(f"\nClassification Report for '{key}' predictions:")
-        print(classification_report(adata_query.obs[key], adata_query.obs["predicted_" + key], 
-                                    labels=class_labels))
+        #print(f"\nClassification Report for '{key}' predictions:")
+        metrics[key] = classification_report(query.obs[key], query.obs["predicted_" + key], 
+                                    labels=class_labels)
 
         # Plot UMAP with classified cell types
-        sc.pl.umap(adata_query, color=["confidence", "predicted_" + key, key], 
+        sc.pl.umap(query, color=["confidence", "predicted_" + key, key], 
                    ncols=1, na_in_legend=True, legend_fontsize=20)
 
 
 
 
-def find_valid_label(tree, current_label):
-    if current_label in tree:
-        # If the current label exists, return it
-        return tree[current_label]
-    
-    # Check for parent if the current label is not found at this level
-    for key, value in tree.items():
-        if isinstance(value, dict):
-            # Recurse deeper if there's a nested structure
-            result = find_valid_label(value, current_label)
-            if result:
-                return result
-    return None  # If no valid label is found
-
-
         
-def get_test_data(census_version, test_names, subsample=500):
+def get_test_data(census_version, test_name, subsample=500, 
+                  organism="homo_sapiens", 
+                  split_key="dataset_title"):
     census = cellxgene_census.open_soma(census_version=census_version)
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
     brain_obs = cellxgene_census.get_obs(census, organism,
@@ -339,7 +387,7 @@ def get_test_data(census_version, test_names, subsample=500):
     brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
     brain_obs.drop(columns=['soma_joinid_y'], inplace=True)
     # Filter based on organism
-    test_obs = brain_obs[brain_obs['collection_name'].isin(test_names)]
+    test_obs = brain_obs[brain_obs[split_key].isin([test_name])]
     subsample_ids = random.sample(list(test_obs["soma_joinid"]), subsample)
     # Adjust organism naming for compatibility
     organism_name_mapping = {
@@ -354,7 +402,7 @@ def get_test_data(census_version, test_names, subsample=500):
         "soma_joinid"
     ]
     
-    # Example usage
+
     random.seed(1)
     test = cellxgene_census.get_anndata(
             census=census,
@@ -364,14 +412,9 @@ def get_test_data(census_version, test_names, subsample=500):
             var_value_filter = "nnz > 20",
           #  obs_column_names=cell_columns,
             obs_coords=subsample_ids)
-   # test= relabel(test, relabel_test_path)
     test.obs= test.obs.merge(dataset_info,  on="dataset_id", suffixes=(None,"_y"))
     columns_to_drop = [col for col in test.obs.columns if col.endswith('_y')]
     test.obs.drop(columns=columns_to_drop, inplace=True)
-    test= relabel(test,relabel_path=os.path.join(projPath,"meta","relabel","gittings_relabel.tsv.gz"),
-                            join_key="observation_joinid",sep="\t")
-    # Remove rows where 'rachel_family' is NA in the 'test' AnnData object
-    test = test[~test.obs['rachel_family'].isna(), :]
     return test
 
 def split_anndata_by_obs(adata, obs_key="dataset_title"):
@@ -392,85 +435,3 @@ def split_anndata_by_obs(adata, obs_key="dataset_title"):
     }
     
     return split_data
-
-# Define the hierarchical structure as a dictionary with colnames and labels
-tree = {
-    "GABAergic": {
-        "colname": "rachel_family",
-        "CGE": {
-            "colname": "rachel_class",
-            "LAMP5": {
-                "colname": "rachel_subclass"
-            },
-            "VIP": {
-                "colname": "rachel_subclass"
-            },
-            "SNCG": {
-                "colname": "rachel_subclass"
-            }
-        },
-        "MGE": {
-            "colname": "rachel_class",
-            "PVALB": {
-                "colname": "rachel_subclass"
-            },
-            "SST": {
-                "colname": "rachel_subclass"
-            },
-            "Chandelier": {
-                "colname": "rachel_subclass"
-            }
-        }
-    },
-    "Glutamatergic": {
-        "colname": "rachel_family",
-        "L2/3-6 IT": {
-            "colname": "rachel_class"
-        },
-        "deep layer non-IT": {
-            "colname": "rachel_class",
-            "L5 ET": {
-                "colname": "rachel_subclass"
-            },
-            "L5/6 NP": {
-                "colname": "rachel_subclass"
-            },
-            "L6 CT": {
-                "colname": "rachel_subclass"
-            },
-            "L6b": {
-                "colname": "rachel_subclass"
-            }
-        }
-    },
-    "Non-neuron": {
-        "colname": "rachel_family",
-        "Oligodendrocyte lineage": {
-            "colname": "rachel_class",
-            "Oligodendrocyte": {
-                "colname": "rachel_subclass"
-            },
-            "OPC": {
-                "colname": "rachel_subclass"
-            }
-        },
-        "Astrocyte": {
-            "colname": "rachel_class"
-        },
-        "Immune/Vasculature": {
-            "colname": "rachel_class",
-            "Pericyte": {
-                "colname": "rachel_subclass"
-            },
-            "VLMC": {
-                "colname": "rachel_subclass"
-            },
-            "Endothelial": {
-                "colname": "rachel_subclass"
-            }
-        }
-    }
-}
-
-# Define a recursive function to find a valid label
-

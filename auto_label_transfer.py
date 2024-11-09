@@ -90,32 +90,36 @@ def setup(organism="homo_sapiens", version="2024-07-01"):
 # Set random seed for reproducibility of subsampling
 # Should I pass this to individual functions?
 importlib.reload(adata_functions)
-
+from adata_functions import *
 refs=adata_functions.get_census(organism="homo_sapiens", 
                                 subsample=10, split_column="tissue", dims=20)
 
-test_names=["Cortical brain samples from C9-ALS, C9-ALS/FTD, C9-FTD patients and age matched controls"]
-tests=get_test_data(census_version=cemsus_version, test_names=test_names, subsample=500)
-tests = split_anndata_by_obs(tests, "dataset_title")
+test_names=["Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains"]
+tests={}
+for test_name in test_names:
+    tests[test_name]=get_test_data(census_version=census_version, test_name=test_name, subsample=500, organism="homo_sapiens", split_key="dataset_title")
+#tests = tests[~tests.obs['rachel_family'].isna(), :]
 
-for test_name in test_names():
-    relabel_test_path=os.path.join(projPath,"meta","relabel",test_name,"_relabel.tsv")
-    query= tests[test_name]
-    adata_query = process_adata_query(adata_query, projPath=projPath)
+#if len(test_names) > 1:
+  #  tests = split_anndata_by_obs(tests, obs_key="dataset_title")
+
+join_key="observation_joinid"
+relabel_path=os.path.join(projPath,"meta","relabel","gittings_relabel.tsv.gz")
+ 
+queries={}                    
+for test_name,test in tests.items():
+   # relabel_test_path=os.path.join(projPath,"meta","relabel",test_name,"_relabel.tsv")
+    test = relabel(test,relabel_path=relabel_path,
+                        join_key=join_key,sep="\t")
+  #  query= tests[test_name]
+    queries[test_name] = process_query(test, projPath=projPath)
 
 
-
-# %%
-# Specify your YAML file path here
-yaml_filepath = os.path.join(projPath,"meta","master_hierarchy.yaml")  # Update to your actual file path
-
-with open(yaml_filepath, 'r') as file:
-    dct = yaml.safe_load(file)
 
 
 # %%
 # Define the hierarchical structure as a dictionary with colnames and labels
-cell_hierarchy = {
+tree = {
     "GABAergic": {
         "colname": "rachel_family",
         "CGE": {
@@ -178,7 +182,7 @@ cell_hierarchy = {
         "Astrocyte": {
             "colname": "rachel_class"
         },
-        "Immune/Vasculature": {
+        "Vascular": {
             "colname": "rachel_class",
             "Pericyte": {
                 "colname": "rachel_subclass"
@@ -192,40 +196,20 @@ cell_hierarchy = {
         }
     }
 }
+# %%
+#test
+for test_name,query in queries.items():
+    for ref_name,ref in refs.items():
+    map_valid_labels(ref, query, tree, ref_keys)                                                                   
 
-# Define a recursive function to find a valid label
-def find_valid_label(hierarchy, current_label):
-    if current_label in hierarchy:
-        # If the current label exists, return it
-        return hierarchy[current_label]
-    
-    # Check for parent if the current label is not found at this level
-    for key, value in hierarchy.items():
-        if isinstance(value, dict):
-            # Recurse deeper if there's a nested structure
-            result = find_valid_label(value, current_label)
-            if result:
-                return result
-    return None  # If no valid label is found
+original_label = "Glutamatergic"
 
-# Example usage
-current_label = "LAMP5"
-valid_label = find_valid_label(cell_hierarchy, current_label)
-
-if valid_label:
-    print(f"Valid label for {current_label}: {valid_label}")
-else:
-    print(f"No valid label found for {current_label}")
-
-for ref in refs:
-    classify_cells(adata_census=ref, adata_query=adata_query, ref_keys=ref_keys, tree= tree)
+valid_label = get_valid_label(original_label, query_labels, tree)
+print("Valid label found:", valid_label)
 
 
-# Example usage
-current_label = "LAMP5"
-valid_label = find_valid_label(cell_hierarchy, current_label)
-
-if valid_label:
-    print(f"Valid label for {current_label}: {valid_label}")
-else:
-    print(f"No valid label found for {current_label}")
+# %%
+results = {}
+for query_name, query in queries.items():
+    for ref_name,ref in refs.items():
+    results[query_name][ref_name] = classify_cells(adata_census=ref, query=query, ref_keys=ref_keys, tree= tree)

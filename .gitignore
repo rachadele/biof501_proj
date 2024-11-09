@@ -1,2 +1,14 @@
 homo_sapiens-2024-07-01/
 *h5ad
+*pycache*
+meta/relabel/Dissection:_Angular_gyrus_(AnG)_relabel.tsv
+meta/relabel/Dissection:_Anterior_cingulate_cortex_(ACC)_relabel.tsv
+meta/relabel/Human_Multiple_Cortical_Areas_SMART-seq_relabel.tsv
+meta/relabel/dorsolateral_prefrontal_cortex_relabel.tsv
+meta/relabel/middle_temporal_gyrus_relabel.tsv
+meta/relabel/primary_auditory_cortex_relabel.tsv
+meta/relabel/primary_somatosensory_cortex_relabel.tsv
+meta/relabel/primary_visual_cortex_relabel.tsv
+meta/relabel/whole_cortex_relabel.tsv
+scvi-human-2024-07-01/
+meta/relabel/Dissection:_Angular_gyrus_(AnG)_relabel.tsv
