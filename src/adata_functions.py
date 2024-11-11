@@ -14,6 +14,10 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.preprocessing import label_binarize
 import yaml
 from pathlib import Path
+from collections import defaultdict
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 current_directory = Path.cwd()
 projPath = current_directory.parent
 
@@ -181,7 +185,7 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
         #breakpoint
         # sc.savefig(f"{projPath}/refs/census/{dataset_title}_{subsample}_umap.png", dpi=300, bbox_inches='tight')
 
-        meta = ref.obs[["cell_type", "rachel_class", "rachel_subclass", "rachel_family"]].drop_duplicates()
+        meta = ref.obs[["cell_type", "rachel_subclass", "rachel_class", "rachel_family"]].drop_duplicates()
         meta.to_csv(f"{projPath}/meta/relabel/{dataset_title}_relabel.tsv", sep="\t", index=False)
 
     return refs
@@ -302,25 +306,102 @@ def map_valid_labels(ref, query, tree, ref_keys):
     
     return ref,query
 
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
 
-def classify_cells(ref, query, ref_keys):
-    #   ref,query = map_valid_labels(ref, query, tree, ref_keys)
+
+def find_node(tree, target_key):
+    """
+    Recursively search the tree for the target_key and return the corresponding node. 
+    """
+    for key, value in tree.items():
+        if isinstance(value, dict):
+            if key == target_key:  # If we've found the class at this level
+                return value  # Return the current node
+            else:
+                # Recurse deeper into the tree
+                result = find_node(value, target_key)
+                if result:
+                    return result
+    return None  # Return None if the target key is not found
+
+
+# Helper function to recursively gather all subclasses under a given level
+def get_subclasses(node, colname):
+    subclasses = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(value, dict) and value.get("colname") == colname:
+                subclasses.append(key)
+            else:
+                subclasses.extend(get_subclasses(value, colname))
+    return subclasses
+
+
+def rfc_pred(ref, query, ref_keys, tree):
+    """
+    Fit a RandomForestClassifier at the most granular level and aggregate probabilities for higher levels.
+    
+    Parameters:
+    - ref: Reference data with labels.
+    - query: Query data for prediction.
+    - ref_keys: List of ordered keys from most granular to highest level (e.g., ["rachel_subclass", "rachel_class", "rachel_family"]).
+    - tree: Dictionary representing the hierarchy of classes.
+    
+    Returns:
+    - probabilities: Dictionary with probabilities for each level of the hierarchy.
+    """
     probabilities = {}
-    for key in ref_keys:
-        probabilities[key]={}
-        # Train the random forest classifier on the census data
-        rfc = RandomForestClassifier()
-        rfc.fit(ref.obsm["scvi"], ref.obs[key].values)
-        
-        # Predict probabilities for each class in the query data
-        probs = rfc.predict_proba(query.obsm["scvi"])
-        class_labels = rfc.classes_
-        probabilities[key]["probabilities"] = probs
-        probabilities[key]["class_labels"]=class_labels
-       # probabilities[key]["optimal_thresholds"]
-    return(probabilities)
+    
+    # The most granular key is the first in the ordered list
+    granular_key = ref_keys[0]
+    
+    # Initialize and fit the RandomForestClassifier at the most granular level
+    rfc = RandomForestClassifier(class_weight='balanced', random_state=42, max_depth=20, )
+    rfc.fit(ref.obsm["scvi"], ref.obs[granular_key].values)
+    # Predict probabilities at e most granular level
+    probs_granular = rfc.predict_proba(query.obsm["scvi"])
+    class_labels_granular = rfc.classes_
+    base_score = rfc.score(query.obsm["scvi"], query.obs[granular_key].values)
 
-def evaluate_classifier(probabilities, query, ref_keys, specified_threshold=None):
+    # Store granular level probabilities
+    probabilities[granular_key] = {
+        "probabilities": probs_granular,
+        "class_labels": class_labels_granular,
+        "accuracy": base_score
+    }
+     # Aggregate probabilities for higher levels using e tree dictionary
+    for higher_level_key in ref_keys[1:]:  # Skip the first (granular) level
+        # Get all possible classes for this level (e.g. "GABAergic", "Glutamatergic", "Non-neuron")
+        subclasses = get_subclasses(tree, higher_level_key) 
+        higher_level_probs = np.zeros((query.n_obs, len(subclasses)))
+        for i, higher_class in enumerate(subclasses): # eg "GABAergic"
+
+            node = find_node(tree, higher_class) # find position in tree dict
+            valid = get_subclasses(node, ref_keys[0]) # get all granular labels falling under this class
+            # eg all GABAergic subclasses
+            if not valid:
+                valid = [higher_class] # if no subclasses, keep the same probabilities for this cell
+            # Sum probabilities of the subclasses for each higher class
+            valid_indices = [np.where(class_labels_granular == subclass)[0][0]
+                             for subclass in valid if subclass in class_labels_granular]
+            higher_level_probs[:, i] = np.sum(probs_granular[:, valid_indices], axis=1)
+
+            row_sums = np.sum(higher_level_probs, axis=1)
+        # Check if any rows don't sum to 1
+        if np.any(row_sums < 1 - 1e-6):  # Allow a small tolerance for numerical errors
+            print(f"Warning: probabilities for {higher_level_key} do not sum to 1.")        
+        # Store the aggregated probabilities and class labels
+        probabilities[higher_level_key] = {
+            "probabilities": higher_level_probs,
+            "class_labels": get_subclasses(tree, higher_level_key),
+        }
+    
+    return probabilities 
+
+
+
+def roc_analysis(probabilities, query, ref_keys, specified_threshold=None):
     optimal_thresholds = {}
     metrics={}
     for key in ref_keys:
@@ -352,81 +433,180 @@ def evaluate_classifier(probabilities, query, ref_keys, specified_threshold=None
                 optimal_thresholds[key][class_label] = 0.5
             elif positive_samples > 0:
                 metrics[key][class_label]={}
+                # True label one hot encoding at class label index = 
+                # vector of all cells which are either 1 = label or 0 = not label
+                # probs = probability vector for all cells given class label
                 fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i])
-                roc_auc = auc(fpr, tpr)
-            #   plt.plot(fpr, tpr, lw=2, label=f"Class {class_label} (AUC = {roc_auc:.2f})")
-                
-                # Optimal threshold based on Youden's J statistic, or use the specified threshold
-                if specified_threshold is not None:
-                    optimal_threshold = specified_threshold
-                else:
-                    optimal_idx = np.argmax(tpr - fpr)
-                    optimal_threshold = thresholds[optimal_idx]
-                    if optimal_threshold == float('inf'):
-                        optimal_threshold = 0 
+                roc_auc = auc(fpr, tpr)                
+                optimal_idx = np.argmax(tpr - fpr)
+                optimal_threshold = thresholds[optimal_idx]
+                if optimal_threshold == float('inf'):
+                    optimal_threshold = 0 
                 optimal_thresholds[key][class_label]=optimal_threshold
                 metrics[key][class_label]["tpr"] = tpr
                 metrics[key][class_label]["fpr"] = fpr
                 metrics[key][class_label]["auc"] = roc_auc
                 metrics[key][class_label]["optimal_threshold"] = optimal_threshold
-        
-            # Assign predictions based on optimal thresholds
+
+    return metrics
+
+def process_thresholds(rocs): 
+    # Populate the list with threshold data
+    thresholds_data = []
+
+    for query, query_data in rocs.items():
+        for ref, ref_data in query_data.items():
+            for key, roc in ref_data.items():
+                if roc:
+                    for class_label, class_data in roc.items():
+                        if class_data:
+                            thresholds_data.append({
+                                "ref": ref,
+                                "query": query,
+                                "key": key, 
+                                "label": class_label, 
+                                "threshold": class_data["optimal_threshold"]
+                            })
+
+    # Create DataFrame from the collected data
+    class_thresholds = pd.DataFrame(thresholds_data)
+    return class_thresholds
+
+
+def plot_threshold_distribution(df, projPath, average_thresholds):
+    plt.figure(figsize=(12, 6))
+    sns.violinplot(data=df, x='key', y='threshold', palette="Set2")
+    plt.xlabel('Key', fontsize=14)
+    plt.ylabel('Threshold', fontsize=14)
+    plt.title('Distribution of Youden\'s J Across All Data', fontsize=20)
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    save_path = os.path.join(projPath, "results", "threshold_distribution.png")
+    plt.savefig(save_path)
+
+
+def check_column_ties(probabilities, class_labels):
+    """
+    Checks for column ties (multiple columns with the same maximum value) in each row.
+
+    Parameters:
+    - probabilities (numpy.ndarray): 2D array where rows represent samples and columns represent classes.
+    - class_labels (list): List of class labels corresponding to the columns.
+
+    Returns:
+    - tie_rows (list): List of row indices where ties occur.
+    - tie_columns (dict): Dictionary where the key is the row index and the value is a list of tied column indices and their class labels.
+    """
+    # Find the maximum probability for each row
+    max_probs = np.max(probabilities, axis=1)
+
+    # Check if there are ties (multiple columns with the maximum value in the row)
+    ties = np.sum(probabilities == max_probs[:, None], axis=1) > 1
+
+    # Get the indices of rows with ties
+    tie_rows = np.where(ties)[0]
+
+    # Find the columns where the tie occurs and associated class labels
+    tie_columns = {}
+    for row in tie_rows:
+        tied_columns = np.where(probabilities[row] == max_probs[row])[0]
+        tie_columns[row] = [(col, class_labels[col]) for col in tied_columns]
+    
+    return tie_rows, tie_columns
+
+def classify_cells(query, ref_keys, average_thresholds, probabilities, **kwargs):
+    threshold = kwargs.get('threshold', True)  # Or some other default value
+    class_metrics = {}
+    for key in ref_keys:  
+        class_metrics[key]={}
+        class_labels = probabilities[key]["class_labels"]
         predicted_classes = []
-        
-        average_threshold= get_average_threshold(optimal_thresholds, key)
-        metrics[key]["average_threshold"] = average_threshold
-                
-        for i in range(query.n_obs):
-            class_probs = probs[i]
-            max_class = "unknown"
-            max_prob = 0.0
-            for j, class_label in enumerate(class_labels): 
-                if class_probs[j] >= average_threshold and class_probs[j] > max_prob:
-                    max_class = class_label
-                    max_prob = class_probs[j]
-            #max_probs.append(max_prob)
-            predicted_classes.append(max_class)
-        
+         # Convert thresholds to a numpy array for faster comparison
+        threshold_array = np.array([average_thresholds[key]] * query.n_obs)
+        # Vectorized probability retrieval and decision-making
+        class_probs = np.array([probabilities[key]["probabilities"][i] for i in range(query.n_obs)])  # Shape: (query.n_obs, num_classes)
+        class_labels = np.array(probabilities[key]["class_labels"])  # Shape: (num_classes,)
+        # Use np.argmax to find the class with the highest probability
+        if threshold:
+            # Find the class with the maximum probability for each cell
+            max_class_indices = np.argmax(class_probs, axis=1) # shape 500,
+            # index of class
+            max_class_probs = np.max(class_probs, axis=1) # shape 500,
+            #max probabilitiy
+            # need to break ties somehow here so that levels agree
+            # fml
+            
+            # Set predicted classes to "unknown" if the max probability does not meet the threshold
+            predicted_classes = [
+                class_labels[i] if prob > threshold_array[cell] else "unknown"
+                for cell, (i, prob) in enumerate(zip(max_class_indices, max_class_probs))
+            ]  # i = class index
+                # prob = prob
+                # cell = cell index
+        else:
+            # Direct prediction without threshold filtering
+            predicted_classes = class_labels[np.argmax(class_probs, axis=1)]          
+            
         # Store predictions and confidence in `query`
         query.obs["predicted_" + key] = predicted_classes
-        query.obs["confidence"] = np.max(probs, axis=1)
+        query.obs["confidence"] = np.max(probabilities[key]["probabilities"], axis=1)
         
         true_labels = query.obs[key].unique()
         predicted_labels = query.obs["predicted_" + key].unique()
 
         missing_true = [label for label in class_labels if label not in true_labels]
         missing_predicted = [label for label in class_labels if label not in predicted_labels]
-
-        if missing_true:
-            print(f"Warning: Missing classes in true labels: {missing_true}. Removing from confusion.")
-        if missing_predicted:
-            print(f"Missing classes in predicted labels: {missing_predicted}") 
         
         # remove labels that are not in the original author labels
-        labels=[label for label in class_labels if label not in missing_true]
-    # Classification report for predictions
-        metrics[key]["classification_report"] = classification_report(query.obs[key], query.obs["predicted_" + key], 
-                                        labels=labels,output_dict=True)
+        #labels = list(class_labels)
+        missing_intersection = set(missing_true) & set(missing_predicted)
+        print(f"Removing missing from predicted and true: {missing_intersection}")
+        # Update labels to exclude missing labels (both true and predicted)
+        labels = [label for label in class_labels if label not in missing_intersection]
+
+        labels.append("unknown")
+                    # Confusion matrix for predictions
+        conf_matrix = confusion_matrix(
+            query.obs[key], query.obs["predicted_" + key], 
+            labels=labels
+        )
+        class_metrics[key]["confusion"] = {
+            "matrix": conf_matrix,
+            "labels": labels
+        }
+        # Classification report for predictions
+        class_metrics[key]["classification_report"] = classification_report(query.obs[key], query.obs["predicted_" + key], 
+                                        labels=labels,output_dict=True, zero_division=0)
         
+
         # Plot UMAP with classified cell types
-    #sc.pl.umap(query, color=["confidence"] + ["predicted_" + key for key in ref_keys], ncols=1, na_in_legend=True, legend_fontsize=20)
+    return query,class_metrics
 
-    return query,metrics
 
-def get_average_threshold(optimal_thresholds, key):
-    """
-    Calculates the average threshold for a given key across all class labels.
+
+def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir):
+    new_query_name = query_name.replace(" ", "_").replace("/", "_")
+    new_ref_name = ref_name.replace(" ", "_").replace("/", "_")   
+               
+    # Extract confusion matrix and labels from the confusion data
+    conf_matrix = confusion_data["matrix"]
+    labels = confusion_data["labels"]
+
+    # Plot the confusion matrix
+    plt.figure(figsize=(15, 15))
+    sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title(f'Confusion Matrix: {query_name} vs {ref_name} - {key}')
     
-    Parameters:
-    optimal_thresholds (dict): A dictionary containing optimal thresholds for each key and class label.
-    key (str): The specific key for which to average the thresholds.
+    # Save the plot
+   # output_dir = os.path.join(projPath, 'results', 'confusion')
     
-    Returns:
-    float: The average threshold for the given key.
-    """
-    thresholds = [optimal_thresholds[key][class_label] for class_label in optimal_thresholds[key] if optimal_thresholds[key][class_label] is not None]
-    average_threshold = sum(thresholds) / len(thresholds) if thresholds else 0.5  # Default to 0.5 if no thresholds
-    return average_threshold 
+    os.makedirs(os.path.join(output_dir, new_query_name, new_ref_name), exist_ok=True)  # Create the directory if it doesn't exist
+    plt.savefig(os.path.join(os.path.join(output_dir, new_query_name, new_ref_name),f"{key}_confusion.png"))
+    plt.close() 
+
+
 
 def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_path=None):
     """
@@ -483,38 +663,37 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
         plt.savefig(save_path, bbox_inches='tight')
         print(f"Plot saved to {save_path}")
     
-    plt.show()
 
-import pandas as pd
 
-def combine_f1_scores(results, ref_keys):
+
+def combine_f1_scores(class_metrics, ref_keys):
     # Dictionary to store DataFrames for each key
     all_f1_scores = {}
     
     # Iterate over each key in ref_keys
     for key in ref_keys:
         # Create a list to store F1 scores for each query-ref combo
-        f1_data = []
-        
+        f1_data = [] 
         # Iterate over all query-ref combinations
-        for query_name in results:
-            for ref_name in results[query_name]:
+        for query_name in class_metrics:
+            for ref_name in class_metrics[query_name]:
                 # Extract the classification report for the current query-ref-key combination
-                classification_report = results[query_name][ref_name][key]["classification_report"]
-                
+                classification_report = class_metrics[query_name][ref_name][key]["classification_report"]
                 # Extract F1 scores for each label
                 if classification_report:
                     for label, metrics in classification_report.items():
-                        if isinstance(metrics, dict) and 'f1-score' in metrics:
-                            f1_data.append({
-                                'query': query_name,
-                                'reference': ref_name,
-                                'label': label,
-                                'f1_score': metrics['f1-score'],
-                                'macro_f1': classification_report.get('macro avg', {}).get('f1-score', None),
-                                'micro_f1': classification_report.get('micro avg', {}).get('f1-score', None),
-                                'weighted_f1': classification_report.get('weighted avg', {}).get('f1-score', None)
-                            })
+                        if label not in ["macro avg","micro avg","weighted avg","accuracy"]:
+                         #   if isinstance(metrics, dict) and 'f1-score' in metrics:
+                                f1_data.append({
+                                    'query': query_name,
+                                    'reference': ref_name,
+                                    'label': label,
+                                    'f1_score': metrics['f1-score'],                         
+                                    'macro_f1': classification_report.get('macro avg', {}).get('f1-score', None),
+                                    'micro_f1': classification_report.get('micro avg', {}).get('f1-score', None),
+                                    'weighted_f1': classification_report.get('weighted avg', {}).get('f1-score', None)#,
+                                   # 'accuracy': classification_report.get('accuracy', )
+                                })
 
         # Create DataFrame for the current key
         df = pd.DataFrame(f1_data)
@@ -525,46 +704,97 @@ def combine_f1_scores(results, ref_keys):
     return all_f1_scores
 
 
-def plot_f1_heatmaps(all_f1_scores):
+def plot_f1_heatmaps(all_f1_scores, thresholds, outpath, ref_keys):
     import seaborn as sns
     import matplotlib.pyplot as plt
     # Create a figure to hold the plots
-    fig, axes = plt.subplots(nrows=1, ncols=len(all_f1_scores)+1, figsize=(20, 10))
+    fig, axes = plt.subplots(ncols=len(all_f1_scores), nrows=1, figsize=(40, 10))
     
-    # Iterate over the F1 score DataFrames for each key
     for idx, (key, df) in enumerate(all_f1_scores.items()):
-        # Pivot the DataFrame to get labels as rows and queries + references as columns
-        pivot_df = df.pivot_table(index='label', columns=['query', 'reference'], values='f1_score')
-        
-        # Plot heatmap for label-level F1 scores
-        sns.heatmap(pivot_df, annot=True, cmap='coolwarm', cbar_kws={'label': 'F1 Score'}, ax=axes[idx])
-        axes[idx].set_title(f'F1 Scores for {key} (Label-level)', fontsize=16)
-        axes[idx].set_xlabel('Query - Reference', fontsize=12)
-        axes[idx].set_ylabel('Label', fontsize=12)
-        
-    # Now create a final heatmap for macro, micro, and weighted F1 scores
-    final_f1_data = []
-    for key, df in all_f1_scores.items():
-        final_f1_data.append({
-            'key': key,
-            'macro_f1': df['macro_f1'].iloc[0] if not df['macro_f1'].isnull().all() else None,
-            'micro_f1': df['micro_f1'].iloc[0] if not df['micro_f1'].isnull().all() else None,
-            'weighted_f1': df['weighted_f1'].iloc[0] if not df['weighted_f1'].isnull().all() else None
-        })
-    
-    final_f1_df = pd.DataFrame(final_f1_data).set_index('key')
-    
-    # Plot the final heatmap for macro, micro, and weighted F1 scores
-    sns.heatmap(final_f1_df.T, annot=True, cmap='coolwarm', cbar_kws={'label': 'F1 Score'}, ax=axes[-1])
-    axes[-1].set_title('Macro, Micro, and Weighted F1 Scores', fontsize=16)
-    axes[-1].set_xlabel('Key', fontsize=12)
-    axes[-1].set_ylabel('F1 Score Type', fontsize=12)
-    
-    # Adjust layout
+        for query in df['query'].unique():
+        # Pivot the DataFrame to get references as rows and labels + queries as columns
+            pivot_df = df.pivot_table(index='reference', columns='label', values='f1_score')
+
+        # Plot heatmap for label-level F1 scores with flipped axes
+            sns.heatmap(pivot_df, annot=True, cmap='YlOrRd', cbar_kws={'label': 'F1 Score'}, ax=axes[idx])
+            axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=90)
+            axes[idx].set_title(f'F1 Scores for {key} at threshold = {thresholds[key]:.2f}', fontsize=25)
+            axes[idx].set_ylabel('Reference', fontsize=20)
+            axes[idx].set_xlabel('Label', fontsize=20)
+
+    # Adjust layout to avoid overlap
     plt.tight_layout()
+    plt.savefig(os.path.join(projPath, outpath,'label_f1_scores.png'))  # Change the file name as needed
+    plt.close()
+     
+ ## Now create a final heatmap for macro, micro, and weighted F1 scores
+    final_f1_data = pd.DataFrame()
+    for key, df in all_f1_scores.items():
+        macro = df.drop(columns=['label', 'f1_score'])
+        macro["key"] = key
+        final_f1_data = pd.concat([final_f1_data, macro], ignore_index=True)
+
+    #pivot_df = final_f1_data.pivot_table(
+    #index='reference', 
+    #columns=['key', 'query'],
+    #values=['macro_f1', 'micro_f1', 'weighted_f1'], 
+    #)
+## Create a new figure for the aggregated F1 score heatmaps
+    #fig, axes = plt.subplots(ncols=len(pivot_df.columns.get_level_values('key').unique()), nrows=1, figsize=(30, 10))
+    ## Loop through each unique key and query
+    #ordered_keys = ref_keys 
+    #fig, axes = plt.subplots(ncols=len(ordered_keys), nrows=1, figsize=(30, 10))
+    #for idx, key in enumerate(ordered_keys):
+        #for query in pivot_df.columns.get_level_values('query').unique():
+            ## Select columns for the current key and query
+            #key_columns = pivot_df.xs(key, level='key', axis=1).xs(query, level='query', axis=1)
+           ## metric_names = key_columns.columns.get_level_values(0).unique()
+           ## metric_names="we"
+            ## Plot the heatmap for the current key and query
+            #ax = sns.heatmap(key_columns, annot=True, cmap='YlOrRd', cbar_kws={'label': 'Score'}, fmt='.3f', ax=axes[idx])
+
+            ## Set x-axis labels with the metric names
+            #ax.set_xticklabels(metric_names, rotation=45, ha="right")
+
+            ## Title and labels
+            #axes[idx].set_title(f'{key} at threshold {thresholds[key]:.2f}', fontsize=25)
+            #axes[idx].set_xlabel('Metric', fontsize=20)
+            #axes[idx].set_ylabel('Reference', fontsize=20)
     
-    # Show the plot
-    plt.show()
+           ## fig.suptitle('Aggregated F1 Scores for {query} + {key}', fontsize=20, y=1.03)
+        ## Save the second plot for aggregated F1 scores
+    #plt.tight_layout()
+    #plt.savefig(os.path.join(projPath,outpath,"agg_f1_scores.png"))
+    #plt.close()
+    
+    # Step 1: Aggregate data for the weighted F1 score
+    weighted_f1_data = final_f1_data[['reference', 'key', 'query', 'weighted_f1']]
+
+    # Step 2: Pivot data to structure it for heatmap plotting
+    pivot_f1 = weighted_f1_data.pivot_table(
+        index='reference',
+        columns=['key', 'query'],
+        values='weighted_f1'
+    )
+    ordered_columns = [col for col in ref_keys if col in pivot_f1.columns.get_level_values('key').unique()]
+    pivot_f1 = pivot_f1[ordered_columns]
+
+    # Step 3: Create a new figure for the aggregated F1 score heatmap
+    fig, ax = plt.subplots(figsize=(15, 10))
+
+    # Plot the heatmap for the weighted F1 score
+    sns.heatmap(pivot_f1, annot=True, cmap='YlOrRd', cbar_kws={'label': 'Weighted F1 Score'}, fmt='.3f', ax=ax)
+    new_column_labels = [label[0] for label in pivot_f1.columns]
+    ax.set_xticklabels(new_column_labels, rotation=45, ha="right")
+    # Set the title and labels
+    ax.set_title('Weighted F1 Score', fontsize=20)
+    ax.set_xlabel('Key and Query', fontsize=15)
+    ax.set_ylabel('Reference', fontsize=15)
+    plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better readability
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(projPath,outpath,"agg_f1_scores.png"))
+
 
         
 def get_test_data(census_version, test_name, subsample=500, 
