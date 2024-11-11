@@ -370,83 +370,83 @@ def rfc_pred(ref, query, ref_keys, tree):
         "class_labels": class_labels_granular,
         "accuracy": base_score
     }
-     # Aggregate probabilities for higher levels using e tree dictionary
-    for higher_level_key in ref_keys[1:]:  # Skip the first (granular) level
-        # Get all possible classes for this level (e.g. "GABAergic", "Glutamatergic", "Non-neuron")
-        subclasses = get_subclasses(tree, higher_level_key) 
-        higher_level_probs = np.zeros((query.n_obs, len(subclasses)))
-        for i, higher_class in enumerate(subclasses): # eg "GABAergic"
+     ## Aggregate probabilities for higher levels using e tree dictionary
+    #for higher_level_key in ref_keys[1:]:  # Skip the first (granular) level
+        ## Get all possible classes for this level (e.g. "GABAergic", "Glutamatergic", "Non-neuron")
+        #subclasses = get_subclasses(tree, higher_level_key) 
+        #higher_level_probs = np.zeros((query.n_obs, len(subclasses)))
+        #for i, higher_class in enumerate(subclasses): # eg "GABAergic"
 
-            node = find_node(tree, higher_class) # find position in tree dict
-            valid = get_subclasses(node, ref_keys[0]) # get all granular labels falling under this class
-            # eg all GABAergic subclasses
-            if not valid:
-                valid = [higher_class] # if no subclasses, keep the same probabilities for this cell
-            # Sum probabilities of the subclasses for each higher class
-            valid_indices = [np.where(class_labels_granular == subclass)[0][0]
-                             for subclass in valid if subclass in class_labels_granular]
-            higher_level_probs[:, i] = np.sum(probs_granular[:, valid_indices], axis=1)
+            #node = find_node(tree, higher_class) # find position in tree dict
+            #valid = get_subclasses(node, ref_keys[0]) # get all granular labels falling under this class
+            ## eg all GABAergic subclasses
+            #if not valid:
+                #valid = [higher_class] # if no subclasses, keep the same probabilities for this cell
+            ## Sum probabilities of the subclasses for each higher class
+            #valid_indices = [np.where(class_labels_granular == subclass)[0][0]
+                             #for subclass in valid if subclass in class_labels_granular]
+            #higher_level_probs[:, i] = np.sum(probs_granular[:, valid_indices], axis=1)
 
-            row_sums = np.sum(higher_level_probs, axis=1)
-        # Check if any rows don't sum to 1
-        if np.any(row_sums < 1 - 1e-6):  # Allow a small tolerance for numerical errors
-            print(f"Warning: probabilities for {higher_level_key} do not sum to 1.")        
-        # Store the aggregated probabilities and class labels
-        probabilities[higher_level_key] = {
-            "probabilities": higher_level_probs,
-            "class_labels": get_subclasses(tree, higher_level_key),
-        }
+            #row_sums = np.sum(higher_level_probs, axis=1)
+        ## Check if any rows don't sum to 1
+        #if np.any(row_sums < 1 - 1e-6):  # Allow a small tolerance for numerical errors
+            #print(f"Warning: probabilities for {higher_level_key} do not sum to 1.")        
+        ## Store the aggregated probabilities and class labels
+        #probabilities[higher_level_key] = {
+            #"probabilities": higher_level_probs,
+            #"class_labels": get_subclasses(tree, higher_level_key),
+        #}
     
     return probabilities 
 
 
 
-def roc_analysis(probabilities, query, ref_keys, specified_threshold=None):
+def roc_analysis(probabilities, query, key, specified_threshold=None):
     optimal_thresholds = {}
     metrics={}
-    for key in ref_keys:
+  #  for key in ref_keys:
        # print(key) 
-        probs = probabilities[key]["probabilities"]
-        class_labels = probabilities[key]["class_labels"]
-        optimal_thresholds[key] = {}
+    probs = probabilities[key]["probabilities"]
+    class_labels = probabilities[key]["class_labels"]
+    optimal_thresholds[key] = {}
         
-        # Binarize the class labels for multiclass ROC computation
-        true_labels = label_binarize(query.obs[key].values, classes=class_labels)
+    # Binarize the class labels for multiclass ROC computation
+    true_labels = label_binarize(query.obs[key].values, classes=class_labels)
         
-        # Find the optimal threshold for each class
-        metrics[key] = {}
-        for i, class_label in enumerate(class_labels):
-            optimal_thresholds[key][class_label] = {}
-            # check for positive samples
-            # usually positive samples are 0 when a ref label is
-            # replaced with a parent label
-            # since it is not in the original query labels
-            # but it is being annotated during the label transfer
-            # these should not be evaluated ?
-            # incorrect classifications will be reflected in the AUC and F1 of the og label
-            # eg. ET is not in query so it is changed to "deep layer non-IT"
-            # but these cells are CT or NP in the ref, so they're still incorrect
-            # not entirely sure how to deal with this
-            positive_samples = np.sum(true_labels[:, i] == 1)
-            if positive_samples == 0:
-                print(f"Warning: No positive samples for class {class_label}, skipping eval and setting threshold to 0.5")
-                optimal_thresholds[key][class_label] = 0.5
-            elif positive_samples > 0:
-                metrics[key][class_label]={}
-                # True label one hot encoding at class label index = 
-                # vector of all cells which are either 1 = label or 0 = not label
-                # probs = probability vector for all cells given class label
-                fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i])
-                roc_auc = auc(fpr, tpr)                
-                optimal_idx = np.argmax(tpr - fpr)
-                optimal_threshold = thresholds[optimal_idx]
-                if optimal_threshold == float('inf'):
-                    optimal_threshold = 0 
-                optimal_thresholds[key][class_label]=optimal_threshold
-                metrics[key][class_label]["tpr"] = tpr
-                metrics[key][class_label]["fpr"] = fpr
-                metrics[key][class_label]["auc"] = roc_auc
-                metrics[key][class_label]["optimal_threshold"] = optimal_threshold
+    # Find the optimal threshold for each class
+    metrics[key] = {}
+    for i, class_label in enumerate(class_labels):
+        optimal_thresholds[key][class_label] = {}
+        # check for positive samples
+        # usually positive samples are 0 when a ref label is
+        # replaced with a parent label
+        # since it is not in the original query labels
+        # but it is being annotated during the label transfer
+        # these should not be evaluated ?
+        # incorrect classifications will be reflected in the AUC and F1 of the og label
+        # eg. ET is not in query so it is changed to "deep layer non-IT"
+        # but these cells are CT or NP in the ref, so they're still incorrect
+        # not entirely sure how to deal with this
+        positive_samples = np.sum(true_labels[:, i] == 1)
+        if positive_samples == 0:
+            print(f"Warning: No positive samples for class {class_label}, skipping eval and setting threshold to 0.5")
+            optimal_thresholds[key][class_label] = 0.5
+        elif positive_samples > 0:
+            metrics[key][class_label]={}
+            # True label one hot encoding at class label index = 
+            # vector of all cells which are either 1 = label or 0 = not label
+            # probs = probability vector for all cells given class label
+            fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i])
+            roc_auc = auc(fpr, tpr)                
+            optimal_idx = np.argmax(tpr - fpr)
+            optimal_threshold = thresholds[optimal_idx]
+            if optimal_threshold == float('inf'):
+                optimal_threshold = 0 
+            optimal_thresholds[key][class_label]=optimal_threshold
+            metrics[key][class_label]["tpr"] = tpr
+            metrics[key][class_label]["fpr"] = fpr
+            metrics[key][class_label]["auc"] = roc_auc
+            metrics[key][class_label]["optimal_threshold"] = optimal_threshold
 
     return metrics
 
@@ -474,7 +474,7 @@ def process_thresholds(rocs):
 
 
 def plot_threshold_distribution(df, projPath, average_thresholds):
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 6))
     sns.violinplot(data=df, x='key', y='threshold', palette="Set2")
     plt.xlabel('Key', fontsize=14)
     plt.ylabel('Threshold', fontsize=14)
@@ -514,43 +514,82 @@ def check_column_ties(probabilities, class_labels):
     
     return tie_rows, tie_columns
 
-def classify_cells(query, ref_keys, average_thresholds, probabilities, **kwargs):
+def classify_cells(query, ref_keys, average_thresholds, probabilities, tree, **kwargs):
     threshold = kwargs.get('threshold', True)  # Or some other default value
     class_metrics = {}
-    for key in ref_keys:  
-        class_metrics[key]={}
-        class_labels = probabilities[key]["class_labels"]
-        predicted_classes = []
-         # Convert thresholds to a numpy array for faster comparison
-        threshold_array = np.array([average_thresholds[key]] * query.n_obs)
-        # Vectorized probability retrieval and decision-making
-        class_probs = np.array([probabilities[key]["probabilities"][i] for i in range(query.n_obs)])  # Shape: (query.n_obs, num_classes)
-        class_labels = np.array(probabilities[key]["class_labels"])  # Shape: (num_classes,)
-        # Use np.argmax to find the class with the highest probability
-        if threshold:
-            # Find the class with the maximum probability for each cell
-            max_class_indices = np.argmax(class_probs, axis=1) # shape 500,
-            # index of class
-            max_class_probs = np.max(class_probs, axis=1) # shape 500,
-            #max probabilitiy
-            # need to break ties somehow here so that levels agree
-            # fml
+ #   for key in ref_keys:  
+    key = ref_keys[0]
+    class_metrics[key]={}
+    class_labels = probabilities[key]["class_labels"]
+    predicted_classes = []
+        # Convert thresholds to a numpy array for faster comparison
+    threshold_array = np.array([average_thresholds[key]] * query.n_obs)
+    # Vectorized probability retrieval and decision-making
+    class_probs = np.array([probabilities[key]["probabilities"][i] for i in range(query.n_obs)])  # Shape: (query.n_obs, num_classes)
+    class_labels = np.array(probabilities[key]["class_labels"])  # Shape: (num_classes,)
+    # Use np.argmax to find the class with the highest probability
+    if threshold:
+        # Find the class with the maximum probability for each cell
+        max_class_indices = np.argmax(class_probs, axis=1) # shape 500,
+        # index of class
+        max_class_probs = np.max(class_probs, axis=1) # shape 500,
+        #max probabilitiy
+        # need to break ties somehow here so that levels agree
+        # fml
             
-            # Set predicted classes to "unknown" if the max probability does not meet the threshold
-            predicted_classes = [
-                class_labels[i] if prob > threshold_array[cell] else "unknown"
-                for cell, (i, prob) in enumerate(zip(max_class_indices, max_class_probs))
-            ]  # i = class index
-                # prob = prob
-                # cell = cell index
-        else:
-            # Direct prediction without threshold filtering
-            predicted_classes = class_labels[np.argmax(class_probs, axis=1)]          
+        # Set predicted classes to "unknown" if the max probability does not meet the threshold
+        predicted_classes = [
+            class_labels[i] if prob > threshold_array[cell] else "unknown"
+            for cell, (i, prob) in enumerate(zip(max_class_indices, max_class_probs))
+        ]  # i = class index
+            # prob = prob
+            # cell = cell index
+    else:
+        # Direct prediction without threshold filtering
+        predicted_classes = class_labels[np.argmax(class_probs, axis=1)]          
             
-        # Store predictions and confidence in `query`
-        query.obs["predicted_" + key] = predicted_classes
-        query.obs["confidence"] = np.max(probabilities[key]["probabilities"], axis=1)
+    # Store predictions and confidence in `query`
+    query.obs["predicted_" + key] = predicted_classes
+    query.obs["confidence"] = np.max(probabilities[key]["probabilities"], axis=1)
+    
+    query = aggregate_preds(query, ref_keys, tree)
+    return query
+
+def aggregate_preds(query, ref_keys, tree):
+    
+    preds = np.array(query.obs[ref_keys[0]])
+    query.obs.index = query.obs.index.astype(int)
+  #  for label in pred_levels:
+   #     find_node
+    for higher_level_key in ref_keys[1:]:  # Skip the first (granular) level
+        ## Get all possible classes for this level (e.g. "GABAergic", "Glutamatergic", "Non-neuron")
+        subclasses = get_subclasses(tree, higher_level_key) 
         
+        for higher_class in subclasses: # eg "GABAergic"
+            node = find_node(tree, higher_class) # find position in tree dict
+            valid = get_subclasses(node, ref_keys[0]) # get all granular labels falling under this class
+            ## eg all GABAergic subclasses
+            if not valid:
+                print("no valid subclasses")
+                continue  # Skip if no subclasses found   
+
+            # Ensure cells_to_agg is in integers (if not already)
+            cells_to_agg = [int(cell) for cell in cells_to_agg]
+            # Get the indices of cells in `preds` that match any of the valid subclasses
+            cells_to_agg = np.where(np.isin(preds, valid))[0]
+            # Assign the higher-level class label to the identified cells
+            query.obs["predicted_" + higher_level_key] = "unknown"  # Initialize with 'Unknown' to account for unknowns preds
+            query.obs.loc[cells_to_agg, "predicted_" + higher_level_key] = higher_class
+
+    return query
+
+def eval(query, ref_keys, probabilities, **kwargs):
+    class_metrics = defaultdict(lambda: defaultdict(dict))
+    for key in ref_keys:
+        
+        class_labels = probabilities[key]["class_labels"]
+        
+        threshold = kwargs.get('threshold', True)  # Or some other default value    
         true_labels = query.obs[key].unique()
         predicted_labels = query.obs["predicted_" + key].unique()
 
@@ -558,21 +597,28 @@ def classify_cells(query, ref_keys, average_thresholds, probabilities, **kwargs)
         missing_predicted = [label for label in class_labels if label not in predicted_labels]
         
         # remove labels that are not in the original author labels
-        #labels = list(class_labels)
         missing_intersection = set(missing_true) & set(missing_predicted)
-        print(f"Removing missing from predicted and true: {missing_intersection}")
+        if len(missing_intersection) > 1:
+            print(f"Removing labels that are missing from predicted and true: {missing_intersection}")
         # Update labels to exclude missing labels (both true and predicted)
         labels = [label for label in class_labels if label not in missing_intersection]
 
         labels.append("unknown")
                     # Confusion matrix for predictions
+        # if threshold:
+            # remove all cells annotated as "unknown" in "predicted classes"
+            # and the corresponding cell by index in true classes
+            # we want to see if removing unknowns helps
+        accuracy =  accuracy_score(query.obs[key], query.obs["predicted_" + key])
+
         conf_matrix = confusion_matrix(
             query.obs[key], query.obs["predicted_" + key], 
             labels=labels
         )
         class_metrics[key]["confusion"] = {
             "matrix": conf_matrix,
-            "labels": labels
+            "labels": labels,
+            "accuracy": accuracy
         }
         # Classification report for predictions
         class_metrics[key]["classification_report"] = classification_report(query.obs[key], query.obs["predicted_" + key], 
@@ -580,7 +626,7 @@ def classify_cells(query, ref_keys, average_thresholds, probabilities, **kwargs)
         
 
         # Plot UMAP with classified cell types
-    return query,class_metrics
+    return class_metrics
 
 
 
@@ -621,7 +667,7 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
     import numpy as np
 
     num_keys = len(metrics)
-    plt.figure(figsize=(15, 20))
+    plt.figure(figsize=(10, 8))
     plt.suptitle(title, fontsize=25)
 
     # Create a subplot for each key

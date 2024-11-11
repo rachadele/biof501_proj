@@ -146,11 +146,11 @@ for query_name, query in queries.items():
         
         print(query_name)
         print(ref_name)
-        for key in ref_keys:
+     #  for key in ref_keys:
             
-            print(check_column_ties(all_probs[key]["probabilities"],all_probs[key]["class_labels"]))
+        print(check_column_ties(all_probs["rachel_subclass"]["probabilities"],all_probs["rachel_subclass"]["class_labels"]))
         rocs[query_name][ref_name] = roc_analysis(probabilities=all_probs, 
-                                                    query=query, ref_keys=ref_keys)
+                                                    query=query, key=ref_keys[0])
         new_query_name = query_name.replace(" ", "_").replace("/", "_")
         new_ref_name = ref_name.replace(" ", "_").replace("/", "_")
         outdir=os.path.join(projPath, "results",new_query_name, new_ref_name)
@@ -172,27 +172,37 @@ from collections import defaultdict
 importlib.reload(adata_functions)
 from adata_functions import *
 
+mapped_queries=defaultdict(lambda: defaultdict(dict))
+
 for query_name, query in queries.items():
     for ref_name,ref in refs.items():
         probabilities = probs[query_name][ref_name]
-        queries[query_name],class_metrics_thresh[query_name][ref_name] = classify_cells(query, 
-                                                                                ref_keys,
-                                                                                average_thresholds,
-                                                                                probabilities,
-                                                                                threshold=True)
+        query = classify_cells(query, 
+                                ref_keys,
+                                average_thresholds,
+                                probabilities, tree,
+                                threshold=True)
+        
+        class_metrics_nothresh[query_name][ref_name] = eval(query, 
+                                                            ref_keys,
+                                                            probabilities,
+                                                            threshold=True)
         new_query_name = query_name.replace(" ", "_").replace("/", "_")
         new_ref_name = ref_name.replace(" ", "_").replace("/", "_")                                                     
         # Plot the UMAP
         sc.pl.umap(
-            queries[query_name], 
+            query, 
             color=["confidence"] + ["predicted_" + key for key in ref_keys] + [key for key in ref_keys], 
             ncols=2, na_in_legend=True, legend_fontsize=20, 
             show=False  # Prevents immediate display, so we can save it with plt
         )
 
+        outdir =os.path.join(projPath, "results", "umaps", "threshold",new_query_name,new_ref_name)
+        os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
+
         # Save the figure using plt.savefig()
         plt.savefig(
-            os.path.join(projPath, "results", "umaps", "threshold",f"{new_query_name}_{new_ref_name}_threshold.png"), 
+            os.path.join(outdir, "_threshold.png"), 
             dpi=300, 
             bbox_inches='tight'
         )
@@ -201,27 +211,35 @@ for query_name, query in queries.items():
 for query_name, query in queries.items():
     for ref_name in refs:
         probabilities = probs[query_name][ref_name]
-        queries[query_name],class_metrics_nothresh[query_name][ref_name] = classify_cells(query, 
-                                                                                ref_keys,
-                                                                                average_thresholds,
-                                                                                probabilities,
-                                                                                threshold=False)
+        query = classify_cells(query, 
+                                ref_keys,
+                                average_thresholds,
+                                probabilities, tree,
+                                threshold=False)
+        
+        class_metrics_nothresh[query_name][ref_name] = eval(query, 
+                                                            ref_keys,
+                                                            probabilities, 
+                                                            threshold=False)
         new_query_name = query_name.replace(" ", "_").replace("/", "_")
         new_ref_name = ref_name.replace(" ", "_").replace("/", "_")                                                     
         # Plot the UMAP
         sc.pl.umap(
-            queries[query_name], 
+            query, 
             color=["confidence"] + ["predicted_" + key for key in ref_keys] + [key for key in ref_keys], 
             ncols=2, na_in_legend=True, legend_fontsize=20, 
             show=False  # Prevents immediate display, so we can save it with plt
         )
+        outdir =os.path.join(projPath, "results", "umaps", "no_threshold",new_query_name,new_ref_name)
+        os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
 
         # Save the figure using plt.savefig()
         plt.savefig(
-            os.path.join(projPath, "results", "umaps", "no_threshold",f"{new_query_name}_{new_ref_name}.png"), 
+            os.path.join(outdir, "_no_threshold.png"), 
             dpi=300, 
             bbox_inches='tight'
         )
+      
         plt.close()
 
  
