@@ -9,27 +9,27 @@ import scanpy as sc
 import numpy as np
 import pandas as pd
 import anndata as ad
-import glob
+#import glob
 import cellxgene_census
-import leidenalg
-import igraph
+#import leidenalg
+#import igraph
 import scvi
-import scipy
+#import scipy
 from scipy.sparse import csr_matrix
 import warnings
 import cellxgene_census
 import cellxgene_census.experimental
 import scvi
-import tempfile
-import botocore
+#import tempfile
+#import botocore
 import torch
-import gzip
+#import gzip
 from sklearn.ensemble import RandomForestClassifier
 import adata_functions
 from adata_functions import *
 from pathlib import Path
 current_directory = Path.cwd()
-projPath = current_directory.parent
+projPath = current_directory
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
@@ -37,8 +37,6 @@ from sklearn.preprocessing import label_binarize
 import yaml
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-
 import json
 
 # Read the JSON file
@@ -135,13 +133,12 @@ from adata_functions import *
 confusion = defaultdict(lambda: defaultdict(dict))
 rocs = defaultdict(lambda: defaultdict(dict))
 probs = defaultdict(lambda: defaultdict(dict))
-class_metrics_thresh = defaultdict(lambda: defaultdict(dict))
-class_metrics_nothresh = defaultdict(lambda: defaultdict(dict)) 
+class_metrics = defaultdict(lambda: defaultdict(dict))
 for query_name, query in queries.items():
     #probs[query_name] = {}
   #  [query_name] = {}
     for ref_name,ref in refs.items():
-        all_probs = rfc_pred(ref=ref, query=query, ref_keys=ref_keys, tree=tree)
+        all_probs = rfc_pred(ref=ref, query=query, ref_keys=ref_keys)
         probs[query_name][ref_name] = all_probs
         
         print(query_name)
@@ -153,7 +150,7 @@ for query_name, query in queries.items():
                                                     query=query, key=ref_keys[0])
         new_query_name = query_name.replace(" ", "_").replace("/", "_")
         new_ref_name = ref_name.replace(" ", "_").replace("/", "_")
-        outdir=os.path.join(projPath, "results",new_query_name, new_ref_name)
+        outdir=os.path.join(projPath, "results","roc",new_query_name, new_ref_name)
         os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
         plot_roc_curves(metrics=rocs[query_name][ref_name],
                        title=f"{query_name} vs {ref_name}",
@@ -161,81 +158,40 @@ for query_name, query in queries.items():
          
 
 # %%
-threshold_df= process_thresholds(rocs)
-average_thresholds = threshold_df.groupby('key')['threshold'].mean().to_dict()
+threshold_df= process_data(rocs, var="optimal_threshold")
+average_thresholds = threshold_df.groupby('key')['optimal_threshold'].mean().to_dict()
 # Example usage
-plot_threshold_distribution(threshold_df, projPath, average_thresholds)
+plot_distribution(threshold_df, projPath, var="optimal_threshold")
 
-
+auc_df= process_data(rocs, var="auc")
+average_auc = auc_df.groupby('key')['auc'].mean().to_dict()
+# Example usage
+plot_distribution(auc_df, projPath, var="auc")
 # %%
-from collections import defaultdict
-importlib.reload(adata_functions)
-from adata_functions import *
 
-mapped_queries=defaultdict(lambda: defaultdict(dict))
-
-for query_name, query in queries.items():
-    for ref_name,ref in refs.items():
-        probabilities = probs[query_name][ref_name]
-        query = classify_cells(query, 
-                                ref_keys,
-                                average_thresholds,
-                                probabilities, tree,
-                                threshold=True)
-        
-        class_metrics_nothresh[query_name][ref_name] = eval(query, 
-                                                            ref_keys,
-                                                            probabilities,
-                                                            threshold=True)
-        new_query_name = query_name.replace(" ", "_").replace("/", "_")
-        new_ref_name = ref_name.replace(" ", "_").replace("/", "_")                                                     
-        # Plot the UMAP
-        sc.pl.umap(
-            query, 
-            color=["confidence"] + ["predicted_" + key for key in ref_keys] + [key for key in ref_keys], 
-            ncols=2, na_in_legend=True, legend_fontsize=20, 
-            show=False  # Prevents immediate display, so we can save it with plt
-        )
-
-        outdir =os.path.join(projPath, "results", "umaps", "threshold",new_query_name,new_ref_name)
-        os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
-
-        # Save the figure using plt.savefig()
-        plt.savefig(
-            os.path.join(outdir, "_threshold.png"), 
-            dpi=300, 
-            bbox_inches='tight'
-        )
-        plt.close()
-        
 for query_name, query in queries.items():
     for ref_name in refs:
         probabilities = probs[query_name][ref_name]
-        query = classify_cells(query, 
-                                ref_keys,
-                                average_thresholds,
-                                probabilities, tree,
-                                threshold=False)
+        query = classify_cells(query, ref_keys, 0, probabilities, tree, threshold=False)
         
-        class_metrics_nothresh[query_name][ref_name] = eval(query, 
-                                                            ref_keys,
-                                                            probabilities, 
-                                                            threshold=False)
+        class_metrics[query_name][ref_name] = eval(query, 
+                                                    ref_keys,
+                                                    threshold=False)
         new_query_name = query_name.replace(" ", "_").replace("/", "_")
         new_ref_name = ref_name.replace(" ", "_").replace("/", "_")                                                     
         # Plot the UMAP
         sc.pl.umap(
             query, 
             color=["confidence"] + ["predicted_" + key for key in ref_keys] + [key for key in ref_keys], 
-            ncols=2, na_in_legend=True, legend_fontsize=20, 
+            ncols=3, na_in_legend=True, legend_fontsize=20, 
             show=False  # Prevents immediate display, so we can save it with plt
         )
-        outdir =os.path.join(projPath, "results", "umaps", "no_threshold",new_query_name,new_ref_name)
+        outdir =os.path.join(projPath, "results", "umaps",new_query_name,new_ref_name)
         os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
 
         # Save the figure using plt.savefig()
         plt.savefig(
-            os.path.join(outdir, "_no_threshold.png"), 
+            os.path.join(outdir, "umap.png"), 
             dpi=300, 
             bbox_inches='tight'
         )
@@ -243,33 +199,18 @@ for query_name, query in queries.items():
         plt.close()
 
  
-# %%   
-nothresh = {key : 0 for key in ref_keys}
-all_f1_scores_nothresh=combine_f1_scores(class_metrics_nothresh, ref_keys) # Combine f1 scores into data frame
-plot_f1_heatmaps(all_f1_scores_nothresh, nothresh, outpath="results/no_thresholds", ref_keys=ref_keys)
+# %%  
 
-
-all_f1_scores_thresh=combine_f1_scores(class_metrics_thresh, ref_keys) # Combine f1 scores into data frame
-plot_f1_heatmaps(all_f1_scores_thresh, average_thresholds, outpath="results/thresholds", ref_keys=ref_keys)
+all_f1_scores=combine_f1_scores(class_metrics, ref_keys) # Combine f1 scores into data frame
+outdir =os.path.join(projPath, "results", "heatmaps")
+os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
+plot_f1_heatmaps(all_f1_scores, threshold=0, outpath=outdir, ref_keys=ref_keys)
 
 # %%
 for query_name in queries:
     for ref_name in refs:
             for key in ref_keys:
                  plot_confusion_matrix(query_name, ref_name, key,
-                                      class_metrics_nothresh[query_name][ref_name][key]["confusion"],
+                                      class_metrics[query_name][ref_name][key]["confusion"],
                                       output_dir=os.path.join(projPath,'results', "no_thresholds",'confusion'))
-
-for query_name in queries:
-    for ref_name in refs:
-            for key in ref_keys:
-                 plot_confusion_matrix(query_name, ref_name, key,
-                                      class_metrics_thresh[query_name][ref_name][key]["confusion"],
-                                      output_dir=os.path.join(projPath,'results', "thresholds",'confusion'))
-
  
-        
-# %%
-# %%
-
-# %%
