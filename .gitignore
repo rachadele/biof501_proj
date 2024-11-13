@@ -14,4 +14,6 @@ meta/relabel/primary_somatosensory_cortex_relabel.tsv
 meta/relabel/primary_visual_cortex_relabel.tsv
 meta/relabel/whole_cortex_relabel.tsv
 scvi-human-2024-07-01/
+__pycache__/
+
 meta/relabel/Dissection:_Angular_gyrus_(AnG)_relabel.tsv
