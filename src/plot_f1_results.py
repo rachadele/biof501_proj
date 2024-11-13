@@ -44,7 +44,7 @@ args = parse_arguments()
 
 # Set organism and census_version from arguments
 ref_keys=args.ref_keys
-f1_results = ast.literal_eval(args.f1_results)
+f1_results = args.f1_results#.replace("[", "").replace("]", "").split(",")
 cutoff=args.cutoff
 
 all_f1_scores = {}
@@ -71,5 +71,5 @@ for file in f1_results:
 
     
 
-plot_f1_heatmaps(all_f1_scores, threshold=cutoff, outpath="f1_results", ref_keys=ref_keys)
+plot_f1_heatmaps(all_f1_scores, threshold=cutoff, outpath="f1_plots", ref_keys=ref_keys)
 

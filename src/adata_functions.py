@@ -486,7 +486,7 @@ def plot_distribution(df, projPath, var):
     sns.violinplot(data=df, x='label', y=var, palette="Set2")
     plt.xlabel('Key', fontsize=14)
     plt.ylabel(f"{var}", fontsize=14)
-    plt.title(f'Distribution of {var} across all References', fontsize=20)
+    plt.title(f'Distribution of {var} across all References', fontsize=30)
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
     save_path = os.path.join(projPath, "results", f"{var}_distribution.png")
@@ -628,7 +628,7 @@ def eval(query, ref_keys, **kwargs):
         }
         # Classification report for predictions
         class_metrics[key]["classification_report"] = classification_report(true_labels, predicted_labels, 
-                                        labels=labels,output_dict=True, zero_division=0)
+                                        labels=labels,output_dict=True, zero_division=np.nan)
        
     return class_metrics
 
@@ -769,8 +769,8 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
             sns.heatmap(pivot_df, annot=True, cmap='YlOrRd', cbar_kws={'label': 'F1 Score'}, ax=axes[idx])
             axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=90)
             axes[idx].set_title(f'F1 Scores for {key} at threshold = {threshold:.2f}', fontsize=25)
-            axes[idx].set_ylabel('Reference', fontsize=20)
-            axes[idx].set_xlabel('Label', fontsize=20)
+            axes[idx].set_ylabel('Reference', fontsize=30)
+            axes[idx].set_xlabel('Label', fontsize=30)
 
     # Adjust layout to avoid overlap
     plt.tight_layout()
@@ -804,7 +804,7 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
     new_column_labels = [label[0] for label in pivot_f1.columns]
     ax.set_xticklabels(new_column_labels, rotation=45, ha="right")
     # Set the title and labels
-    ax.set_title(f'Weighted F1 Score at threshold = {threshold:.2f}', fontsize=20)
+    ax.set_title(f'Weighted F1 Score at threshold = {threshold:.2f}', fontsize=30)
     ax.set_xlabel('Key and Query', fontsize=15)
     ax.set_ylabel('Reference', fontsize=15)
     plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better readability

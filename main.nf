@@ -88,6 +88,8 @@ process rfc_classify {
 
     output:
     path "f1_results/*f1_scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
+    path "roc/**"
+    path "umap/**"
 
     script:
     """
@@ -108,7 +110,7 @@ process plot_results {
     file f1_scores
 
     output:
-    path "f1_results/*png" // Wildcard to capture all relevant output files
+    path "f1_plots/*png" // Wildcard to capture all relevant output files
 
     script:
     
@@ -133,13 +135,9 @@ workflow {
     rfc_classify(params.organism, params.census_version, params.tree_file, query_path, ref_paths.flatMap(), params.ref_keys.join(' '), params.cutoff)
 
     // Collect all individual output files into a single channel
-    f1_scores = rfc_classify.out.f1_score_channel.collect()
-    //quoted_f1_scores = f1_scores.collect { "'${it}'" }
+    f1_scores = rfc_classify.out.f1_score_channel
 
-
-    f1_scores.view()
-   // plot_results(params.ref_keys.join(' '), params.cutoff, f1_scores)
-
+    plot_results(params.ref_keys.join(' '), params.cutoff, f1_scores.flatten().toList()) 
 }
 
 // workflow.onComplete {
