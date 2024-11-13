@@ -13,10 +13,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /biof501_proj
 
 # Copy the requirements file into the container
 COPY requirements.txt .
+# Copy all Python scripts into the container (adjust the paths as necessary)
+COPY src/ biof501_proj/src
+COPY meta/ /biof501_proj/meta
 
 # Upgrade pip and install the required packages
 RUN pip install --upgrade pip && \

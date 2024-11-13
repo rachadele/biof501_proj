@@ -11,4 +11,3 @@ scipy
 botocore
 torch
 scikit-learn
-networkx
