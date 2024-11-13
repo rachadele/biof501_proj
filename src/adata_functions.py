@@ -15,15 +15,18 @@ from sklearn.preprocessing import label_binarize
 from collections import defaultdict
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+scvi.settings.seed = 0
 from pathlib import Path
 current_directory = Path.cwd()
 projPath = current_directory
 
+import subprocess
+
+
 def setup(organism="homo_sapiens", version="2024-07-01"):
     organism=organism.replace(" ", "_") 
-    census = cellxgene_census.open_soma(census_version=version)
-    outdir = f"{organism}-{version}"  # Concatenate strings using f-string
+    #census = cellxgene_census.open_soma(census_version=version)
+    outdir = f"scvi-human-{version}"  # Concatenate strings using f-string
     
     # Create the output directory if it doesn't exist
     if not os.path.exists(outdir):
@@ -31,25 +34,25 @@ def setup(organism="homo_sapiens", version="2024-07-01"):
 
     # Check if the model file exists
     model_file_path = os.path.join(outdir, "model.pt")
-    if not os.path.exists(model_file_path):
+    #if not os.path.exists(model_file_path):
         # Get scVI model info
-        scvi_info = cellxgene_census.experimental.get_embedding_metadata_by_name(
+    scvi_info = cellxgene_census.experimental.get_embedding_metadata_by_name(
             embedding_name="scvi",
             organism=organism,
             census_version=version,
         )
 
         # Extract the model link
-        model_link = scvi_info["model_link"]
-        date = model_link.split("/")[5]
-        url = os.path.join("https://cellxgene-contrib-public.s3.us-west-2.amazonaws.com/models/scvi/", date, organism, "model.pt")
+    model_link = scvi_info["model_link"]
+    date = model_link.split("/")[5]
+    url = os.path.join("https://cellxgene-contrib-public.s3.us-west-2.amazonaws.com/models/scvi/", date, organism, "model.pt")
 
-        # Download the model using wget if it doesn't already exist
-        subprocess.run(["wget", "--no-check-certificate", "-q", "-O", model_file_path, url])
-    else:
-        print(f"File already exists at {model_file_path}, skipping download.")
+    # Download the model using wget if it doesn't already exist
+    subprocess.run(["wget", "--no-check-certificate", "-q", "-O", model_file_path, url])
+# else:
+     #   print(f"File already exists at {model_file_path}, skipping download.")
 
-    return(model_file_path)
+    return(outdir)
 
 # Subsample x cells from each cell type if there are n>x cells present
 #ensures equal representation of cell types in reference
@@ -89,7 +92,7 @@ def relabel(adata, relabel_path, join_key, sep="\t"):
 
 
 def extract_data(data, filtered_ids, subsample=500, organism=None, census=None, 
-    obs_filter=None, cell_columns=None, dataset_info=None, dims=20, relabel_path=f"{projPath}/meta/relabel/census_map_human.tsv"):
+    obs_filter=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv"):
     
     brain_cell_subsampled_ids = subsample_cells(data, filtered_ids, subsample)
     # Assuming get_seurat is defined to return an AnnData object
@@ -115,14 +118,13 @@ def extract_data(data, filtered_ids, subsample=500, organism=None, census=None,
     sc.tl.umap(adata)
     # Merging metadata with dataset_info
     newmeta = adata.obs.merge(dataset_info, on="dataset_id", suffixes=(None,"y"))
-   # newmeta = newmeta.drop(columns=['soma_joinid_y']).rename(columns={'soma_joinid_x': 'soma_joinid'})
     adata.obs = newmeta
     # Assuming relabel_wrapper is defined
     adata = relabel(adata, relabel_path=relabel_path, join_key="cell_type", sep='\t')
     # Convert all columns in adata.obs to factors (categorical type in pandas)
     return adata
 
-def split_and_extract_data(data, split_column, subsample=500, organism=None, census=None, cell_columns=None, dataset_info=None, dims=20):
+def split_and_extract_data(data, split_column, subsample=500, organism=None, census=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv"):
     # Get unique split values from the specified column
     unique_values = data[split_column].unique()
     refs = {}
@@ -133,7 +135,7 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
         obs_filter = f"{split_column} == '{split_value}'"
         
         adata = extract_data(data, filtered_ids, subsample, organism, census, obs_filter, 
-                             cell_columns, dataset_info, dims=dims)
+                             cell_columns, dataset_info, dims=dims, relabel_path=relabel_path)
         dataset_titles = adata.obs['dataset_title'].unique()
 
         if len(dataset_titles) > 1:
@@ -145,7 +147,7 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
 
     return refs
 
-def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=500, split_column="tissue", dims=20, projPath=projPath):
+def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=500, split_column="tissue", dims=20, relabel_path="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv"):
 
     census = cellxgene_census.open_soma(census_version=census_version)
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
@@ -192,7 +194,8 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
         brain_obs_filtered, split_column=split_column,
         subsample=subsample, organism=organism,
         census=census, cell_columns=cell_columns,
-        dataset_info=dataset_info, dims=dims
+        dataset_info=dataset_info, dims=dims,
+        relabel_path=relabel_path
     )
     # Get embeddings for all data together
     filtered_ids = brain_obs_filtered['soma_joinid'].values
@@ -200,7 +203,8 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
         brain_obs_filtered, filtered_ids,
         subsample=subsample, organism=organism,
         census=census, obs_filter=None,
-        cell_columns=cell_columns, dataset_info=dataset_info, dims=dims
+        cell_columns=cell_columns, dataset_info=dataset_info, dims=dims,
+        relabel_path=relabel_path
     )
     refs["whole cortex"] = adata
 
@@ -215,14 +219,14 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
         #breakpoint
         # sc.savefig(f"{projPath}/refs/census/{dataset_title}_{subsample}_umap.png", dpi=300, bbox_inches='tight')
 
-        meta = ref.obs[["cell_type", "rachel_subclass", "rachel_class", "rachel_family"]].drop_duplicates()
+        #meta = ref.obs[["cell_type", "rachel_subclass", "rachel_class", "rachel_family"]].drop_duplicates()
         #meta.to_csv(f"{projPath}/meta/relabel/{dataset_title}_relabel.tsv", sep="\t", index=False)
 
     return refs
 
 
 
-def process_query(query, tissue="frontal cortex", dataset_id="QUERY", dataset_title=None, batch_key="sample", projPath=projPath):
+def process_query(query, model_file_path, batch_key="sample"):
     # Ensure the input AnnData object is valid
     if not isinstance(query, ad.AnnData):
         raise ValueError("Input must be an AnnData object.")
@@ -232,7 +236,7 @@ def process_query(query, tissue="frontal cortex", dataset_id="QUERY", dataset_ti
     if "feature_id" in query.var.columns:
         query.var.set_index("feature_id", inplace=True)
 
-    model_file_path=os.path.join(projPath, "scvi-human-2024-07-01")
+    #model_file_path=os.path.join(projPath, "scvi-human-2024-07-01")
     query.obs["n_counts"] = query.X.sum(axis=1)
     query.obs["joinid"] = list(range(query.n_obs))
     query.obs["batch"] = query.obs[batch_key]
@@ -752,6 +756,7 @@ def combine_f1_scores(class_metrics, ref_keys):
 
 
 def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
+    os.makedirs(outpath, exist_ok=True) 
     # Create a figure to hold the plots
     fig, axes = plt.subplots(ncols=len(all_f1_scores), nrows=1, figsize=(40, 10))
     
@@ -769,7 +774,7 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
 
     # Adjust layout to avoid overlap
     plt.tight_layout()
-    plt.savefig(os.path.join(projPath, outpath,'label_f1_scores.png'))  # Change the file name as needed
+    plt.savefig(os.path.join(outpath,'label_f1_scores.png'))  # Change the file name as needed
     plt.close()
      
  ## Now create a final heatmap for macro, micro, and weighted F1 scores
@@ -805,7 +810,7 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
     plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better readability
 
     plt.tight_layout()
-    plt.savefig(os.path.join(projPath,outpath,"agg_f1_scores.png"))
+    plt.savefig(os.path.join(outpath,"agg_f1_scores.png"))
 
 
         

@@ -1,4 +1,7 @@
 homo_sapiens-2024-07-01/
+work/
+*.nextflow*
+*nextflow*
 *h5ad
 *pycache*
 meta/relabel/Dissection:_Angular_gyrus_(AnG)_relabel.tsv

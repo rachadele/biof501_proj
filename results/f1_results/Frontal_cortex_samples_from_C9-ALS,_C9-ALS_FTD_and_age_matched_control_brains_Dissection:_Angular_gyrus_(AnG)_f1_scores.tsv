@@ -1,0 +1,27 @@
+query	reference	label	f1_score	macro_f1	micro_f1	weighted_f1	key	cutoff
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Endothelial	0.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	OPC	1.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	PVALB	0.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	L6 CT	0.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	SNCG	0.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	L5 ET	0.6666666666666666	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	LAMP5	0.8	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	SST	0.5714285714285714	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	L2/3-6 IT	0.9041095890410958	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Oligodendrocyte	1.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Microglia	1.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	VLMC	0.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Chandelier	0.0	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Astrocyte	0.9473684210526315	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	VIP	0.7142857142857143	0.5069239308316453		0.8919044872455111	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	deep layer non-IT	0.3333333333333333	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	L2/3-6 IT	0.9041095890410958	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Vascular	0.6666666666666666	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Microglia	1.0	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Astrocyte	0.9473684210526315	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	CGE	0.9	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Oligodendrocyte lineage	1.0	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	MGE	0.9090909090909091	0.8325711148980796		0.9328352231762469	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Glutamatergic	0.9620253164556962	0.9550837076357697		0.9708819926500613	rachel_family	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	Non-neuron	1.0	0.9550837076357697		0.9708819926500613	rachel_family	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains	Dissection:_Angular_gyrus_(AnG)	GABAergic	0.9032258064516129	0.9550837076357697		0.9708819926500613	rachel_family	0
