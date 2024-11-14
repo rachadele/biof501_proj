@@ -40,7 +40,7 @@ process mapquery {
 
     output:
    // path "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
-    path "${query_file.replace('.h5ad','_processed.h5ad'}"
+    path "${query_file.replace('.h5ad','_processed.h5ad')}"
 
 script:
 
