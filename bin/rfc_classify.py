@@ -67,8 +67,7 @@ ref_name=os.path.basename(ref_path).replace(".h5ad","")
 probs = rfc_pred(ref=ref, query=query, ref_keys=ref_keys)
 rocs= roc_analysis(probabilities=probs, 
                 query=query, key=ref_keys[0])
-#new_query_name = query_name.replace(" ", "_").replace("/", "_")
-#new_ref_name = ref_name.replace(" ", "_").replace("/", "_")
+
 outdir=os.path.join("roc",query_name, ref_name)
 os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
 
@@ -76,12 +75,21 @@ plot_roc_curves(metrics=rocs,
                 title=f"{query_name} vs {ref_name}",
                 save_path=os.path.join(outdir,"roc_results.png"))
 
-rocs_df = process_data(rocs)
+#rocs_df = process_data(rocs)
+
+
 query = classify_cells(query, ref_keys, cutoff=cutoff, probabilities=probs, tree=tree, threshold=False)
         
 class_metrics = eval(query, 
                     ref_keys,
                     threshold=False)
+
+class_metrics = update_classification_report(class_metrics) # replace 0 with nan for f1 with no support
+
+for key in ref_keys:
+    outdir=os.path.join("confusion",query_name, ref_name)
+    plot_confusion_matrix(query_name, ref_name, key, class_metrics[key]["confusion"], output_dir=outdir)
+
 #all_f1_scores={}
 f1_data=[]
 for key in ref_keys:

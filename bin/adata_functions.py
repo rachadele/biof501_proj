@@ -17,8 +17,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 scvi.settings.seed = 0
 from pathlib import Path
-current_directory = Path.cwd()
-projPath = current_directory
+#current_directory = Path.cwd()
+projPath = "/space/grp/rschwartz/rschwartz/biof501_proj/bin"
 
 import subprocess
 
@@ -217,14 +217,7 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=1
             if ref.obs[col].dtype.name =='category':
     # Convert to Categorical and remove unused categories
                 ref.obs[col] = pd.Categorical(ref.obs[col].cat.remove_unused_categories())
-            #ref.obs[col].inplace=True
-        #p = sc.pl.umap(ref, color=["rachel_subclass", "tissue","collection_name"])
-        #breakpoint
-        # sc.savefig(f"{projPath}/refs/census/{dataset_title}_{subsample}_umap.png", dpi=300, bbox_inches='tight')
-
-        #meta = ref.obs[["cell_type", "rachel_subclass", "rachel_class", "rachel_family"]].drop_duplicates()
-        #meta.to_csv(f"{projPath}/meta/relabel/{dataset_title}_relabel.tsv", sep="\t", index=False)
-
+    
     return refs
 
 
@@ -239,7 +232,6 @@ def process_query(query, model_file_path, batch_key="sample"):
     if "feature_id" in query.var.columns:
         query.var.set_index("feature_id", inplace=True)
 
-    #model_file_path=os.path.join(projPath, "scvi-human-2024-07-01")
     query.obs["n_counts"] = query.X.sum(axis=1)
     query.obs["joinid"] = list(range(query.n_obs))
     query.obs["batch"] = query.obs[batch_key]
@@ -466,9 +458,9 @@ def process_data(rocs):
     # Populate the list with threshold data
     data = []
 
-    for query, query_data in rocs.items():
+    for key, results in rocs.items():
         for ref, ref_data in query_data.items():
-            for key, roc in ref_data.items():
+            for key, roc in rocs.items():
                 if roc:
                     for class_label, class_data in roc.items():
                         if class_data:
@@ -477,8 +469,8 @@ def process_data(rocs):
                                 "query": query,
                                 "key": key, 
                                 "label": class_label, 
-                                "roc": class_data["roc"],
-                                "threshold": class_data["threshold"]
+                                "roc": class_data["auc"],
+                                "threshold": class_data["optimal_threshold"]
                               #   f'{var}': class_data[var]
                             })
 
@@ -637,7 +629,12 @@ def eval(query, ref_keys, **kwargs):
        
     return class_metrics
 
-
+def update_classification_report(report):
+    for label, metrics in report.items():
+        if metrics['support'] == 0:
+            metrics['recall'] = np.nan
+            metrics['f1-score'] = np.nan
+    return report
 
 def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir):
     new_query_name = query_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
@@ -648,7 +645,7 @@ def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir)
     labels = confusion_data["labels"]
 
     # Plot the confusion matrix
-    plt.figure(figsize=(15, 15))
+    plt.figure(figsize=(20, 15))
     sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels)
     plt.xlabel('Predicted')
     plt.ylabel('True')
