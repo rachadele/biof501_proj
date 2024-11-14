@@ -48,7 +48,8 @@ script:
 
 python $projectDir/bin/process_query.py --organism ${organism} --census_version ${census_version} \\
                         --model_path ${model_path} \\
-                        --relabel_path ${relabel_q}
+                        --relabel_path ${relabel_q} \\
+                        --query_path ${query_file}
 """
 
 }
