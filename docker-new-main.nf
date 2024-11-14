@@ -117,6 +117,7 @@ process rfc_classify {
     path "f1_results/*f1_scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
     path "roc/**"
     path "umap/**"
+    path "confusion/**"
 
     script:
     """
@@ -157,7 +158,7 @@ workflow {
     .set{query_paths}
 
     Channel.fromPath("${projectDir}/refs/*")
-   // .collect() 
+    // .collect() 
     .set { ref_paths }
 
 
@@ -166,8 +167,6 @@ workflow {
     //ref_paths = getRefs(params.organism, params.census_version, params.subsample_ref, params.relabel_r)
         
     processed_queries = mapquery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
-
-   
 
     // Pass each file in ref_paths to rfc_classify using one query file at a time
     rfc_classify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
