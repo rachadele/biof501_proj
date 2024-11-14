@@ -462,7 +462,7 @@ def roc_analysis(probabilities, query, key, specified_threshold=None):
     return metrics
 
 
-def process_data(rocs, var): 
+def process_data(rocs): 
     # Populate the list with threshold data
     data = []
 
@@ -477,7 +477,9 @@ def process_data(rocs, var):
                                 "query": query,
                                 "key": key, 
                                 "label": class_label, 
-                                 f'{var}': class_data[var]
+                                "roc": class_data["roc"],
+                                "threshold": class_data["threshold"]
+                              #   f'{var}': class_data[var]
                             })
 
     # Create DataFrame from the collected data

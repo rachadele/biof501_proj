@@ -76,7 +76,7 @@ plot_roc_curves(metrics=rocs,
                 title=f"{query_name} vs {ref_name}",
                 save_path=os.path.join(outdir,"roc_results.png"))
 
-
+rocs_df = process_data(rocs)
 query = classify_cells(query, ref_keys, cutoff=cutoff, probabilities=probs, tree=tree, threshold=False)
         
 class_metrics = eval(query, 
@@ -114,12 +114,12 @@ df.to_csv(os.path.join(outdir,f"{query_name}_{ref_name}_f1_scores.tsv"), sep="\t
 outdir=os.path.join("umap",query_name,ref_name)
 os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
 
-with plt.rc_context({'figure.figsize': (30, 15), 'savefig.dpi': 300}):  # Adjust size and dpi as needed                           
+with plt.rc_context({'figure.figsize': (15, 15), 'savefig.dpi': 300}):  # Adjust size and dpi as needed                           
     # Plot the UMAP
     sc.pl.umap(
         query, 
         color=["predicted_" + key for key in ref_keys] + [key for key in ref_keys] + ["confidence"], 
-        ncols=3, na_in_legend=True, legend_fontsize=20, 
+        ncols=2, na_in_legend=True, legend_fontsize=20, 
         show=False  # Prevents immediate display, so we can save it with plt
     )
 

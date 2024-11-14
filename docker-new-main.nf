@@ -160,7 +160,6 @@ workflow {
    // .collect() 
     .set { ref_paths }
 
- 
 
     // query_path=getQuery(params.organism, params.census_version, model_path, params.subsample_query, params.test_name, params.relabel_q)
     // You can chain additional processes here as needed
