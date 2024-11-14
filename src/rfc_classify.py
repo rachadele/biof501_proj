@@ -118,7 +118,7 @@ with plt.rc_context({'figure.figsize': (30, 15), 'savefig.dpi': 300}):  # Adjust
     # Plot the UMAP
     sc.pl.umap(
         query, 
-        color=["predicted_" + key for key in ref_keys] + [key for key in ref_keys] + "confidence", 
+        color=["predicted_" + key for key in ref_keys] + [key for key in ref_keys] + ["confidence"], 
         ncols=3, na_in_legend=True, legend_fontsize=20, 
         show=False  # Prevents immediate display, so we can save it with plt
     )

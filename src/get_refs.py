@@ -35,7 +35,7 @@ def parse_arguments():
     parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     parser.add_argument('--subsample_ref', type=int, default=10)
-    parser.add_argument('--relabel_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv")
+    parser.add_argument('--relabel_path', type=str, default="/biof501_proj/meta/relabel/census_map_human.tsv")
     
     
     return parser.parse_args()
@@ -61,6 +61,7 @@ relabel_path = args.relabel_path
 refs=adata_functions.get_census(organism=organism, 
                                 subsample=subsample_ref, split_column="tissue", dims=20, relabel_path=relabel_path)
 
+print("finished fetching anndata")
 outdir="refs"
 os.makedirs(outdir, exist_ok=True) 
 

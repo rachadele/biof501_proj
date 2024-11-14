@@ -20,11 +20,12 @@ import cellxgene_census.experimental
 import scvi
 import torch
 from sklearn.ensemble import RandomForestClassifier
+import importlib
 import adata_functions
 from adata_functions import *
 from pathlib import Path
 current_directory = Path.cwd()
-projPath = current_directory
+projPath = current_directory.parent
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
@@ -36,6 +37,9 @@ import json
 scvi.settings.seed = 0
 torch.set_float32_matmul_precision("high")
 sc.set_figure_params(figsize=(10, 10), frameon=False)
+
+importlib.reload(adata_functions)
+from adata_functions import *
 
 # Read the JSON file
 with open(os.path.join(projPath,"meta",'master_hierarchy.json'), 'r') as file:

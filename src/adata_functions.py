@@ -91,8 +91,8 @@ def relabel(adata, relabel_path, join_key, sep="\t"):
     return adata
 
 
-def extract_data(data, filtered_ids, subsample=500, organism=None, census=None, 
-    obs_filter=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv"):
+def extract_data(data, filtered_ids, subsample=10, organism=None, census=None, 
+    obs_filter=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/biof501_proj/meta/relabel/census_map_human.tsv'"):
     
     brain_cell_subsampled_ids = subsample_cells(data, filtered_ids, subsample)
     # Assuming get_seurat is defined to return an AnnData object
@@ -102,7 +102,7 @@ def extract_data(data, filtered_ids, subsample=500, organism=None, census=None,
         obs_value_filter=obs_filter,  # Ensure this is constructed correctly
         obs_column_names=cell_columns,
         obs_coords=brain_cell_subsampled_ids,
-        var_value_filter = "nnz > 20",
+        var_value_filter = "nnz > 50",
         obs_embeddings=["scvi"])
     
     print("Subsampling successful.")
@@ -124,7 +124,7 @@ def extract_data(data, filtered_ids, subsample=500, organism=None, census=None,
     # Convert all columns in adata.obs to factors (categorical type in pandas)
     return adata
 
-def split_and_extract_data(data, split_column, subsample=500, organism=None, census=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv"):
+def split_and_extract_data(data, split_column, subsample=500, organism=None, census=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/biof501_proj/meta/relabel/census_map_human.tsv"):
     # Get unique split values from the specified column
     unique_values = data[split_column].unique()
     refs = {}
@@ -147,7 +147,8 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
 
     return refs
 
-def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=500, split_column="tissue", dims=20, relabel_path="/space/grp/rschwartz/rschwartz/biof501_proj/meta/relabel/census_map_human.tsv"):
+def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=10, split_column="tissue", dims=20, 
+               relabel_path="/biof501_proj/meta/relabel/census_map_human.tsv"):
 
     census = cellxgene_census.open_soma(census_version=census_version)
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()
@@ -155,16 +156,18 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=5
         value_filter=(
             "tissue_general == 'brain' and "
             "is_primary_data == True and "
-            "disease == 'normal'"
+            "disease == 'normal' and "
+            "tissue in ['angular gyrus', 'dorsolateral prefrontal cortex', 'middle temporal gyrus', 'primary visual cortex', 'anterior cingulate gyrus', 'primary motor cortex', 'primary somatosensory cortex', 'primary auditory cortex', 'anterior cingulate cortex'] " 
         ))
     
     brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
     brain_obs.drop(columns=['soma_joinid_y'], inplace=True)
+    brain_obs_filtered = brain_obs
     # Filter based on organism
     if organism == "homo_sapiens":
         brain_obs_filtered = brain_obs[
             brain_obs['collection_name'].isin([
-                "SEA-AD: Seattle Alzheimer’s Disease Brain Cell Atlas",
+               # "SEA-AD: Seattle Alzheimer’s Disease Brain Cell Atlas", taking this out to speed things up
                 "Transcriptomic cytoarchitecture reveals principles of human neocortex organization"
             ])
         ]
@@ -822,14 +825,16 @@ def get_test_data(census_version, test_name, subsample=500,
     brain_obs = cellxgene_census.get_obs(census, organism,
         value_filter=(
             "tissue_general == 'brain' and "
-            "is_primary_data == True"
+            "is_primary_data == True and "
+            "tissue == 'frontal cortex' " # putting this in to speed things up for docker
         ))
     
     brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
     brain_obs.drop(columns=['soma_joinid_y'], inplace=True)
     # Filter based on organism
     test_obs = brain_obs[brain_obs[split_key].isin([test_name])]
-    subsample_ids = random.sample(list(test_obs["soma_joinid"]), subsample)
+    filtered_ids = test_obs["soma_joinid"]
+    subsample_ids = subsample_cells(test_obs, filtered_ids, subsample=500)
     # Adjust organism naming for compatibility
     organism_name_mapping = {
         "homo_sapiens": "Homo sapiens",
