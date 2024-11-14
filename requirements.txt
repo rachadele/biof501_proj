@@ -11,3 +11,5 @@ scipy
 botocore
 torch
 scikit-learn
+matplotlib
+seaborn
