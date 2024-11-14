@@ -35,12 +35,12 @@ process mapquery {
     val model_path
    // val subsample_query
    // val test_name
-    val relabel_q
-    val query_file
+    path relabel_q
+    path query_file
 
     output:
    // path "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
-    path "${query_file.replace('.h5ad','_processed.h5ad')}"
+    path "${query_file.toString().replace('.h5ad','_processed.h5ad')}"
 
 script:
 
@@ -109,7 +109,7 @@ process rfc_classify {
     val census_version
     val tree_file
     val query_path
-    val ref_path
+    path ref_path
     val ref_keys
     val cutoff
 
@@ -153,17 +153,25 @@ workflow {
     // Call the setup process to download the model
     model_path = runSetup(params.organism, params.census_version)
 
-    query_path = Channel.fromPath("${projectDir}/queries")
-    ref_paths = Channel.fromPath("${projectDir}/refs")
+    Channel.fromPath("${projectDir}/queries/*")
+    .set{query_paths}
 
+    Channel.fromPath("${projectDir}/refs/*")
+   // .collect() 
+    .set { ref_paths }
+
+ 
 
     // query_path=getQuery(params.organism, params.census_version, model_path, params.subsample_query, params.test_name, params.relabel_q)
     // You can chain additional processes here as needed
     //ref_paths = getRefs(params.organism, params.census_version, params.subsample_ref, params.relabel_r)
         
-    processed_query_path = mapquery(query_path, params.organism, params.census_version, model_path, params.relabel_q) 
-    // Pass each file in ref_paths to rfc_classify
-    rfc_classify(params.organism, params.census_version, params.tree_file, processed_query_path, ref_paths.flatMap(), params.ref_keys.join(' '), params.cutoff)
+    processed_queries = mapquery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
+
+   
+    processed_queries.collect().view()
+    // Pass each file in ref_paths to rfc_classify using one query file at a time
+    rfc_classify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 
     // Collect all individual output files into a single channel
     f1_scores = rfc_classify.out.f1_score_channel

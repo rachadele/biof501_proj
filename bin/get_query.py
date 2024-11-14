@@ -63,7 +63,7 @@ query=get_test_data(census_version=census_version, test_name=test_name,
                                 subsample=subsample_query, organism=organism, split_key="dataset_title")
 query = relabel(query,relabel_path=relabel_path,
 join_key="observation_joinid",sep="\t")
-query = process_query(query, model_path)
+#query = process_query(query, model_path)
 new_query_name = test_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
 #outdir=os.path.join("h5ad","queries")
 #os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist

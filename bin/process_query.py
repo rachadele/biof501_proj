@@ -39,7 +39,7 @@ def parse_arguments():
  ##   parser.add_argument('--subsample_query', default=10, type=int)
     #parser.add_argument('--projPath', type=str, default=".")
   ##  parser.add_argument('--test_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
-    parser.add_argument('--relabel_path', type=str, default="meta/gittings_relabel.tsv.gz")
+    parser.add_argument('--relabel_path', type=str, default="/biof501_proj/meta/gittings_relabel.tsv.gz")
     parser.add_argument('--query_path', type=str, required=True)
  
     return parser.parse_args()
@@ -66,11 +66,10 @@ relabel_path=args.relabel_path
   #                              subsample=subsample_query, organism=organism, split_key="dataset_title")
 
 query = ad.read_h5ad(query_path)
-query = relabel(query,relabel_path=relabel_path,
-join_key="observation_joinid",sep="\t")
+query = relabel(query,relabel_path=relabel_path, join_key="observation_joinid",sep="\t")
 query = process_query(query, model_path)
 #new_query_name = test_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
-new_query_name = os.path.baseame(query_path).replace(".h5ad","_processed")
-outdir="queries"
-os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
-query.write(os.path.join(outdir,f"{new_query_name}.h5ad"))
+new_query_name = os.path.basename(query_path).replace(".h5ad","_processed")
+#outdir="queries"
+#s.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
+query.write(f"{new_query_name}.h5ad")
