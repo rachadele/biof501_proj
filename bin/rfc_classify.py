@@ -58,10 +58,10 @@ cutoff=args.cutoff
 with open(args.tree_file, 'r') as file:
     tree = json.load(file)
     
-query = ad.read_h5ad(query_path)
+query = ad.read_h5ad(query_path, backed="r")
 query_name=os.path.basename(query_path).replace(".h5ad","")
 #for ref_path in ref_paths:
-ref=ad.read_h5ad(ref_path)
+ref=ad.read_h5ad(ref_path, backed="r")
 ref_name=os.path.basename(ref_path).replace(".h5ad","")
 
 probs = rfc_pred(ref=ref, query=query, ref_keys=ref_keys)
