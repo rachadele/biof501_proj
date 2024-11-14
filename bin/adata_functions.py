@@ -104,7 +104,7 @@ def extract_data(data, filtered_ids, subsample=10, organism=None, census=None,
         obs_coords=brain_cell_subsampled_ids,
         var_value_filter = "nnz > 50",
         obs_embeddings=["scvi"])
-    
+    sc.pp.filter_genes(adata, min_cells=3) 
     print("Subsampling successful.")
     # Filter out genes that are not expressed in at least 3 cells
     #adata = adata[adata.X.sum(axis=0) >= 3, :]
@@ -834,7 +834,7 @@ def get_test_data(census_version, test_name, subsample=10,
     # Filter based on organism
     test_obs = brain_obs[brain_obs[split_key].isin([test_name])]
     filtered_ids = test_obs["soma_joinid"]
-    subsample_ids = subsample_cells(test_obs, filtered_ids, subsample=subsample)
+    subsample_ids = subsample_cells(brain_obs, filtered_ids, subsample=subsample)
     # Adjust organism naming for compatibility
     organism_name_mapping = {
         "homo_sapiens": "Homo sapiens",
@@ -855,7 +855,7 @@ def get_test_data(census_version, test_name, subsample=10,
             organism=organism,
            # obs_value_filter= "development_stage"  
            # need to filter out fetal potentially?
-            var_value_filter = "nnz > 20",
+            var_value_filter = "nnz > 50",
           #  obs_column_names=cell_columns,
             obs_coords=subsample_ids)
     test.obs= test.obs.merge(dataset_info,  on="dataset_id", suffixes=(None,"_y"))

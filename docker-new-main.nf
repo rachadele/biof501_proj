@@ -169,7 +169,7 @@ workflow {
     processed_queries = mapquery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
 
    
-    processed_queries.collect().view()
+
     // Pass each file in ref_paths to rfc_classify using one query file at a time
     rfc_classify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 

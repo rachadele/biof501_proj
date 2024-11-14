@@ -68,7 +68,7 @@ refs=adata_functions.get_census(organism="homo_sapiens",
 
 tests={}
 for test_name in test_names:
-    tests[test_name]=get_test_data(census_version=census_version, test_name=test_name, subsample=500, organism="homo_sapiens", split_key="dataset_title")
+    tests[test_name]=get_test_data(census_version=census_version, test_name=test_name, subsample=10, organism="homo_sapiens", split_key="dataset_title")
 #tests = tests[~tests.obs['rachel_family'].isna(), :]
 
 
