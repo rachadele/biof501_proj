@@ -35,7 +35,7 @@ def parse_arguments():
     parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     #parser.add_argument('--tree_file', type=str, required=True, help='Path to the tree JSON file')
-    parser.add_argument('--model_path', type=str, required=True, help='Path to the scvi model file')
+    #parser.add_argument('--model_path', type=str, required=True, help='Path to the scvi model file')
     parser.add_argument('--subsample_query', default=10, type=int)
     #parser.add_argument('--projPath', type=str, default=".")
     parser.add_argument('--test_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
@@ -49,7 +49,7 @@ args = parse_arguments()
 # Set organism and census_version from arguments
 organism = args.organism
 census_version = args.census_version
-model_path = args.model_path
+#model_path = args.model_path
 #tree_file = args.tree_file
 subsample_query = args.subsample_query
 test_name=args.test_name
@@ -65,6 +65,6 @@ query = relabel(query,relabel_path=relabel_path,
 join_key="observation_joinid",sep="\t")
 #query = process_query(query, model_path)
 new_query_name = test_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
-#outdir=os.path.join("h5ad","queries")
-#os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
-query.write(f"{new_query_name}.h5ad")
+outdir=os.path.join("queries")
+os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
+query.write(os.path.join(outdir,f"{new_query_name}.h5ad"))

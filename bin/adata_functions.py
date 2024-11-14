@@ -817,7 +817,7 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
 
 
         
-def get_test_data(census_version, test_name, subsample=500, 
+def get_test_data(census_version, test_name, subsample=10, 
                   organism="homo_sapiens", 
                   split_key="dataset_title"):
     census = cellxgene_census.open_soma(census_version=census_version)
@@ -834,7 +834,7 @@ def get_test_data(census_version, test_name, subsample=500,
     # Filter based on organism
     test_obs = brain_obs[brain_obs[split_key].isin([test_name])]
     filtered_ids = test_obs["soma_joinid"]
-    subsample_ids = subsample_cells(test_obs, filtered_ids, subsample=500)
+    subsample_ids = subsample_cells(test_obs, filtered_ids, subsample=subsample)
     # Adjust organism naming for compatibility
     organism_name_mapping = {
         "homo_sapiens": "Homo sapiens",
