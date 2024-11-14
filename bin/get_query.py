@@ -36,10 +36,10 @@ def parse_arguments():
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     #parser.add_argument('--tree_file', type=str, required=True, help='Path to the tree JSON file')
     parser.add_argument('--model_path', type=str, required=True, help='Path to the scvi model file')
-    parser.add_argument('--subsample_query', default=50, type=int)
+    parser.add_argument('--subsample_query', default=10, type=int)
     #parser.add_argument('--projPath', type=str, default=".")
     parser.add_argument('--test_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
-    parser.add_argument('--relabel_path', type=str, default="../meta/relabel/gittings_relabel.tsv.gz")
+    parser.add_argument('--relabel_path', type=str, default="meta/gittings_relabel.tsv.gz")
     return parser.parse_args()
 
 # Parse command line arguments

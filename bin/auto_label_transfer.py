@@ -49,7 +49,7 @@ with open(os.path.join(projPath,"meta",'master_hierarchy.json'), 'r') as file:
 # Keys for harmonized labels at 3 levels of granularity
 ref_keys = ["rachel_subclass","rachel_class","rachel_family"]
 organism="homo_sapiens"
-random.seed(1)
+#random.seed(1)
 census_version="2024-07-01"
 subsample=50
 split_column="tissue"

@@ -156,8 +156,8 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=1
         value_filter=(
             "tissue_general == 'brain' and "
             "is_primary_data == True and "
-            "disease == 'normal' and "
-            "tissue in ['dorsolateral prefrontal cortex', 'middle temporal gyrus', 'primary visual cortex', 'primary motor cortex', 'primary somatosensory cortex', 'primary auditory cortex', 'anterior cingulate cortex'] " 
+            "disease == 'normal' " # and "
+            #"tissue in ['dorsolateral prefrontal cortex', 'middle temporal gyrus', 'primary visual cortex', 'primary motor cortex', 'primary somatosensory cortex', 'primary auditory cortex', 'anterior cingulate cortex'] " 
         ))
     
     brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
@@ -881,3 +881,5 @@ def split_anndata_by_obs(adata, obs_key="dataset_title"):
     }
     
     return split_data
+
+
