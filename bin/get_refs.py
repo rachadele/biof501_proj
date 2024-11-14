@@ -66,7 +66,7 @@ outdir="refs"
 os.makedirs(outdir, exist_ok=True) 
 
 for ref_name, ref in refs.items():
-    new_ref_name = ref_name.replace(" ", "_").replace("\\/", "_")
+    new_ref_name = ref_name.replace(" ", "_").replace("\\/", "_").replace("(","").replace(")","")
  # Create the directory if it doesn't exist
     ref.write(os.path.join(outdir,f"{new_ref_name}.h5ad"))
     

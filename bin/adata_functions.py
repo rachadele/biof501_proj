@@ -157,7 +157,7 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=1
             "tissue_general == 'brain' and "
             "is_primary_data == True and "
             "disease == 'normal' and "
-            "tissue in ['angular gyrus', 'dorsolateral prefrontal cortex', 'middle temporal gyrus', 'primary visual cortex', 'anterior cingulate gyrus', 'primary motor cortex', 'primary somatosensory cortex', 'primary auditory cortex', 'anterior cingulate cortex'] " 
+            "tissue in ['dorsolateral prefrontal cortex', 'middle temporal gyrus', 'primary visual cortex', 'primary motor cortex', 'primary somatosensory cortex', 'primary auditory cortex', 'anterior cingulate cortex'] " 
         ))
     
     brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
@@ -638,8 +638,8 @@ def eval(query, ref_keys, **kwargs):
 
 
 def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir):
-    new_query_name = query_name.replace(" ", "_").replace("/", "_")
-    new_ref_name = ref_name.replace(" ", "_").replace("/", "_")   
+    new_query_name = query_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
+    new_ref_name = ref_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
                
     # Extract confusion matrix and labels from the confusion data
     conf_matrix = confusion_data["matrix"]
