@@ -35,7 +35,7 @@ def parse_arguments():
     parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     parser.add_argument('--subsample_ref', type=int, default=10)
-    parser.add_argument('--relabel_path', type=str, default="../meta/census_map_human.tsv")
+    parser.add_argument('--relabel_path', type=str, default="meta/census_map_human.tsv")
     
 
     return parser.parse_args()
