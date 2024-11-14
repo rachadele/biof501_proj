@@ -28,7 +28,7 @@ process runSetup {
     """
 }
 
-process process_query {
+process mapquery {
     input:
     val organism
     val census_version
@@ -160,7 +160,7 @@ workflow {
     // You can chain additional processes here as needed
     //ref_paths = getRefs(params.organism, params.census_version, params.subsample_ref, params.relabel_r)
         
-    processed_query_path = process_query(query_path, params.organism, params.census_version, model_path, params.relabel_q) 
+    processed_query_path = mapquery(query_path, params.organism, params.census_version, model_path, params.relabel_q) 
     // Pass each file in ref_paths to rfc_classify
     rfc_classify(params.organism, params.census_version, params.tree_file, query_path, ref_paths.flatMap(), params.ref_keys.join(' '), params.cutoff)
 
