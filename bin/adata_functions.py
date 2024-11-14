@@ -632,8 +632,8 @@ def eval(query, ref_keys, **kwargs):
 def update_classification_report(report):
     for label, metrics in report.items():
         if metrics['support'] == 0:
-            metrics['recall'] = np.nan
-            metrics['f1-score'] = np.nan
+            metrics['recall'] = "nan" 
+            metrics['f1-score'] = "nan" 
     return report
 
 def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir):
