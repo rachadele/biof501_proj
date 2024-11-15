@@ -120,7 +120,7 @@ workflow {
     processed_queries = mapQuery(model_path, params.relabel_q, query_paths, params.batch_key) 
 
     // Pass each file in ref_paths to rfc_classify using one query file at a time
-    rfClassify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
+    rfClassify(params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 
     // Collect all individual output files into a single channel
     f1_scores = rfClassify.out.f1_score_channel
