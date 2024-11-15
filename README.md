@@ -13,18 +13,22 @@ Single-cell expression is a powerful tool for investigating cell-type-specific d
 This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex [cite], while the references comprise 8 datasets from a popular "atlas" of multiple cortical areas [cite]. The references have been pre-downloaded from the CellxGene Discover Census [cite], and have pre-generated embeddings from a variational autoencoder model [cite] trained on all cells in the CellxGene data corpus. 
 
 ### Steps
-1. The query data is passed through the pre-trained model.
-2. A random forest classifier fitted to the reference embeddings. 
-3. The classifier predicts probabilities for each query cell given embeddings from the pre-trained model passs at the most granular level. The user cn optionally filter the proabilities by a threshold. ROC curves for each individual label are computed and plotted.
-4. Predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
-5. F1 scores are computed, plotted and saved to results. The pipeline also plots confusion matrices for each label at each level.
+1. The pre-trained `scvi` model file is fetched given the organism and CellxGene census version
+2. The query data is passed through the pre-trained model.
+3. For each reference file provided, a random forest classifier fitted to the reference embeddings.
+   a. The classifier predicts probabilities for each query cell given embeddings from the pre-trained model passs at the most granular level.
+   b. The user can optionally filter the proabilities by a threshold.
+   c. ROC curves for each individual label are computed and plotted.
+   d. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
+   e. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
+7. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
 
 ### Source code 
 
 Source functions for individual processes can be found in `/bin/adata_functions.py`. Scripts used to download reference and query data are likewise avaialable in `/bin`.
 
 ### Test data
-Toy datasets have been profided in the `reference` and `queries` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default. Setting a threshold is another challenging task, which for now is outside the scope of this pipeline.
+Toy datasets have been provided in the `reference` and `queries` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default. Setting a threshold is another challenging task, which for now is outside the scope of this pipeline.
 
 Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mappin manually. These harmonized labels are used for classification and evaluation.
 
