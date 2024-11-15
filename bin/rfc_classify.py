@@ -38,7 +38,7 @@ def parse_arguments():
     parser.add_argument('--query_path', type=str, default="Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains.h5ad")
     parser.add_argument('--ref_paths', type=str, required=True) #nargs ="+")
     parser.add_argument('--ref_keys', type=str, nargs='+', default=["rachel_subclass", "rachel_class", "rachel_family"])
-    parser.add_argument('--cutoff', type=int, default=0, help = "Cutoff threshold for positive classification")
+    parser.add_argument('--cutoff', type=float, default=0, help = "Cutoff threshold for positive classification")
     #parser.add_argument('--projPath', type=str, default=".")
     return parser.parse_args()
 
