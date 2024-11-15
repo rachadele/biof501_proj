@@ -828,8 +828,8 @@ def get_test_data(census_version, test_name, subsample=10,
     brain_obs.drop(columns=['soma_joinid_y'], inplace=True)
     # Filter based on organism
     test_obs = brain_obs[brain_obs[split_key].isin([test_name])]
-    filtered_ids = test_obs["soma_joinid"]
-    subsample_ids = subsample_cells(brain_obs, filtered_ids, subsample=subsample)
+    filtered_ids = list(test_obs["soma_joinid"])
+    subsample_ids = random.sample(filtered_ids, subsample)#subsample_cells(brain_obs, filtered_ids, subsample=subsample)
     # Adjust organism naming for compatibility
     organism_name_mapping = {
         "homo_sapiens": "Homo sapiens",
