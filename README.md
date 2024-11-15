@@ -10,8 +10,14 @@ Single-cell expression is a powerful tool for investigating cell-type-specific d
 
 ## Workflow description
 
-This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex [cite], while the references comprise 8 datasets from a popular "atlas" of multiple cortical areas [cite]. The references have been pre-downloaded from the CellxGene Discover Census [cite], and have pre-generated embeddings from a variational autoencoder model [cite] trained on all cells in the CellxGene data corpus. The query data is passed through the pre-trained model, and probabilities for the most granular cell type level are predicted by an RF classifier fitted to the reference embeddings. 
-Cell types are predicted given an optional filtering threshold for "unknown" types, and then aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level. ROC curves for each individual label are plotted, and F1 scores given an optional classification threshold are computed. The pipeline also plots confusion matrices for each label at each level.
+This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex [cite], while the references comprise 8 datasets from a popular "atlas" of multiple cortical areas [cite]. The references have been pre-downloaded from the CellxGene Discover Census [cite], and have pre-generated embeddings from a variational autoencoder model [cite] trained on all cells in the CellxGene data corpus. 
+
+### Steps
+1. The query data is passed through the pre-trained model.
+2. A random forest classifier fitted to the reference embeddings. 
+3. The classifier predicts probabilities for each query cell given embeddings from the pre-trained model passs at the most granular level. The user cn optionally filter the proabilities by a threshold. ROC curves for each individual label are computed and plotted.
+4. Predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
+5. F1 scores are computed, plotted and saved to results. The pipeline also plots confusion matrices for each label at each level.
 
 ### Source code 
 
