@@ -34,7 +34,7 @@ import ast
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Download model file based on organism, census version, and tree file.")
     parser.add_argument('--ref_keys', type=str, nargs='+', default=["rachel_subclass", "rachel_class", "rachel_family"])
-    parser.add_argument('--cutoff', type=int, default=0, help = "Cutoff used for classification")
+    parser.add_argument('--cutoff', type=float, default=0, help = "Cutoff used for classification")
     parser.add_argument('--f1_results', type=str, required=True, nargs='+')
     return parser.parse_args()
 
