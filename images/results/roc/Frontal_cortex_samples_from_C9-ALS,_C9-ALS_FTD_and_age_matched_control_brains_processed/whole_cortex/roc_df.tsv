@@ -1,0 +1,12 @@
+	ref	query	key	label	roc	optimal threshold
+0	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	Astrocyte	0.9966666666666667	0.18
+1	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	Endothelial	0.994949494949495	0.18
+2	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	L2/3-6 IT	1.0	0.16
+3	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	L5 ET	1.0	0.7
+4	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	LAMP5	0.9897959183673469	0.17
+5	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	Microglia	1.0	0.75
+6	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	OPC	1.0	0.67
+7	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	Oligodendrocyte	1.0	0.22
+8	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	PVALB	0.6515151515151515	0.02
+9	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	SST	0.8502604166666666	0.06
+10	whole_cortex	Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	rachel_subclass	VIP	0.8901689708141322	0.35

@@ -55,12 +55,13 @@ def main():
   ##test_name=args.test_name
   query_path =args.query_path
   relabel_path=args.relabel_path
+  batch_key=args.batch_key
   
   query = ad.read_h5ad(query_path)
   query = relabel(query,relabel_path=relabel_path, join_key="observation_joinid",sep="\t")
-  query = process_query(query, model_path)
+  query = process_query(query, model_path, batch_key)
   new_query_name = os.path.basename(query_path).replace(".h5ad","_processed")
-  query.write(f"{new_query_name}.h5ad")
+  query.write_h5ad(f"{new_query_name}.h5ad")
   
-  if __name__ == "__main__":
+if __name__ == "__main__":
     main()

@@ -111,7 +111,7 @@ workflow {
     model_path = runSetup(params.organism, params.census_version)
 
     Channel.fromPath(params.queries)
-    .set{query_paths}
+    .set{ query_paths }
 
     Channel.fromPath(params.refs)
     // .collect() 
