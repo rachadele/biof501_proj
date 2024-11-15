@@ -2,7 +2,16 @@
 
 ## Steps to run
 
+running with defaults:
 
+```
+nextflow main.nf
+```
+is equivalent to running:
+
+```
+nextflow main.nf --organism homo_sapiens --census_version 2024-07-01 --cutoff 0 --queries queries/* --refs refs/* --relabel_q meta/gittings_relabel.tsv.gz --relabel_r meta/census_map_human.tsv -with-docker
+```
 
 ## Background
 
@@ -50,6 +59,11 @@ I have built a custom Docker container for use with this pipeline; its configura
    }	 
 ```
 Reading `hdf5` formatted files can be memory intensive; I suggest keeping the memory limit and swap limit as is. 
+
+```
+docker v4.35.1
+nextflow v24.10.0
+```
 
 ## References
 
