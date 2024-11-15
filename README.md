@@ -29,8 +29,19 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 
 ## Container
 
-## References
+I have built a custom Docker container for use with this pipeline; its configuration can be found in `bin/Dockerfile` and `bin/requirements.txt`. The project directory is mounted to the base directory of the container via the config:
 
+```
+ docker { 
+  	enabled = true
+        runOptions = "-v $projectDir:/biof501_proj$projectDir -m 8g --memory-swap -1"
+        temp = 'auto'
+   }	 
+
+```
+Reading `hdf5` formatted files can be memory intensive; I suggest keeping the memory limit and swap limit as is. 
+
+## References
 
 1. Puntambekar S, Hesselberth JR, Riemondy KA, Fu R. Cell-level metadata are indispensable for documenting single-cell sequencing datasets. Koo BK, editor. PLoS Biol. 2021 May 4;19(5):e3001077.
 2. Pasquini G, Rojo Arias JE, Schäfer P, Busskamp V. Automated methods for cell type annotation on scRNA-seq data. Computational and Structural Biotechnology Journal. 2021;19:961–9.
