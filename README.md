@@ -18,7 +18,7 @@ Cell types are predicted given an optional filtering threshold for "unknown" typ
 
 
 ### Test data
-Toy datasets have been profided in the `reference` and `queries` directories. These data are downsamples to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default.
+Toy datasets have been profided in the `reference` and `queries` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default.
 Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mappin manually. These harmonized labels are used for classification and evaluation.
 
 ## DAG
