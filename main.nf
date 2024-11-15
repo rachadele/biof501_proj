@@ -1,18 +1,5 @@
 #!/usr/bin/env nextflow
 
-// Define the required input parameters
-params.organism = "homo_sapiens"
-params.census_version = "2024-07-01" // version of cellxgene census scvi model and data corpus for reference data
-params.tree_file = "$projectDir/meta/master_hierarchy.json" // hierarchy to aggregate predicted classes
-params.ref_keys = ["rachel_subclass", "rachel_class", "rachel_family"]  // transferred labels to evaluate
-params.test_name = "Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains" // name of query
-params.subsample_ref=5 // number of cells per cell type in ref to sample
-params.subsample_query=10 // number of total cells in query to sample
-params.results = "$projectDir/results"  // Directory where outputs will be saved
-params.relabel_q = "$projectDir/meta/gittings_relabel.tsv.gz" // harmonized label mapping for query
-params.relabel_r = "$projectDir/meta/census_map_human.tsv" // harmonized label mapping for references
-params.cutoff = 0 // do not threshold class probabilities 
-
 
 process runSetup {
     input:
@@ -28,18 +15,15 @@ process runSetup {
     """
 }
 
-process mapquery {
+process mapQuery {
     input:
     val organism
     val census_version
     val model_path
-   // val subsample_query
-   // val test_name
     path relabel_q
     path query_file
 
     output:
-   // path "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
     path "${query_file.toString().replace('.h5ad','_processed.h5ad')}"
 
 script:
@@ -100,7 +84,7 @@ process getRefs {
     """
 }
 
-process rfc_classify {
+process rfClassify {
 
     publishDir "${params.results}", mode: "copy"
 
@@ -153,30 +137,62 @@ workflow {
     // Call the setup process to download the model
     model_path = runSetup(params.organism, params.census_version)
 
-    Channel.fromPath("${projectDir}/queries/*")
+    Channel.fromPath(params.queries)
     .set{query_paths}
 
-    Channel.fromPath("${projectDir}/refs/*")
+    Channel.fromPath(params.refs)
     // .collect() 
     .set { ref_paths }
-
-
-    // query_path=getQuery(params.organism, params.census_version, model_path, params.subsample_query, params.test_name, params.relabel_q)
-    // You can chain additional processes here as needed
-    //ref_paths = getRefs(params.organism, params.census_version, params.subsample_ref, params.relabel_r)
-        
-    processed_queries = mapquery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
+    
+    processed_queries = mapQuery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
 
     // Pass each file in ref_paths to rfc_classify using one query file at a time
-    rfc_classify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
+    rfClassify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 
     // Collect all individual output files into a single channel
-    f1_scores = rfc_classify.out.f1_score_channel
+    f1_scores = rfClassify.out.f1_score_channel
 
     // Plot f1 score heatmaps using a list of file names from the f1 score channel
     plot_results(params.ref_keys.join(' '), params.cutoff, f1_scores.flatten().toList()) 
 }
 
-// workflow.onComplete {
- //   log.info ( workflow.success ? "\nDone! See results directory at $projectDir/results" )
-// }
+workflow.onComplete {
+    println "Successfully completed"
+    /*
+    // This bit cannot be run interactively????, only try when sending as pipeline 
+    jsonStr = JsonOutput.toJson(params)
+    file("${params.outdir}/params.json").text = JsonOutput.prettyPrint(jsonStr)
+    */
+    println ( workflow.success ? 
+    """
+    ===============================================================================
+    Pipeline execution summary
+    -------------------------------------------------------------------------------
+
+    Run as      : ${workflow.commandLine}
+    Started at  : ${workflow.start}
+    Completed at: ${workflow.complete}
+    Duration    : ${workflow.duration}
+    Success     : ${workflow.success}
+    workDir     : ${workflow.workDir}
+    Config files: ${workflow.configFiles}
+    exit status : ${workflow.exitStatus}
+
+    --------------------------------------------------------------------------------
+    ================================================================================
+    """.stripIndent() : """
+    Failed: ${workflow.errorReport}
+    exit status : ${workflow.exitStatus}
+    """.stripIndent()
+    )
+}
+
+workflow.onError = {
+println "Error: something went wrong, check the pipeline log at '.nextflow.log"
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+THE END
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/  
