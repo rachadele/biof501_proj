@@ -78,13 +78,12 @@ plot_roc_curves(metrics=rocs,
 #rocs_df = process_data(rocs)
 
 
-query = classify_cells(query, ref_keys, cutoff=cutoff, probabilities=probs, tree=tree, threshold=False)
+query = classify_cells(query, ref_keys, cutoff=cutoff, probabilities=probs, tree=tree)
         
-class_metrics = eval(query, 
-                    ref_keys,
-                    threshold=False)
+class_metrics = eval(query, ref_keys)
 
-class_metrics = update_classification_report(class_metrics) # replace 0 with nan for f1 with no support
+
+class_metrics = update_classification_report(class_metrics, ref_keys) # replace 0 with nan for f1 with no support
 
 for key in ref_keys:
     outdir=os.path.join("confusion",query_name, ref_name)

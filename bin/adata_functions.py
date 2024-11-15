@@ -450,7 +450,7 @@ def roc_analysis(probabilities, query, key, specified_threshold=None):
     return metrics
 
 
-def process_data(rocs): 
+def process_all_rocs(rocs): 
     # Populate the list with threshold data
     data = []
 
@@ -473,6 +473,27 @@ def process_data(rocs):
     # Create DataFrame from the collected data
     df = pd.DataFrame(data)
     return df
+
+
+def process_roc(roc):
+    data=[]
+    for key, roc in rocs.items():
+        if roc:
+            for class_label, class_data in roc.items():
+                if class_data:
+                        data.append({
+                                "ref": ref,
+                                "query": query,
+                                "key": key, 
+                                "label": class_label, 
+                                "roc": class_data["auc"],
+                                "threshold": class_data["optimal_threshold"]
+                              #   f'{var}': class_data[var]
+                            })
+
+    # Create DataFrame from the collected data
+    df = pd.DataFrame(data)
+    return df 
 
 def plot_distribution(df, projPath, var):
     plt.figure(figsize=(8, 6))
@@ -515,7 +536,7 @@ def check_column_ties(probabilities, class_labels):
     
     return tie_rows, tie_columns
 
-def classify_cells(query, ref_keys, cutoff, probabilities, tree, **kwargs):
+def classify_cells(query, ref_keys, cutoff, probabilities, tree):
     threshold = kwargs.get('threshold', True)  # Or some other default value
     class_metrics = {}
  #   for key in ref_keys:  
@@ -529,7 +550,7 @@ def classify_cells(query, ref_keys, cutoff, probabilities, tree, **kwargs):
     class_probs = np.array([probabilities[key]["probabilities"][i] for i in range(query.n_obs)])  # Shape: (query.n_obs, num_classes)
     class_labels = np.array(probabilities[key]["class_labels"])  # Shape: (num_classes,)
     # Use np.argmax to find the class with the highest probability
-    if threshold:
+    if cutoff > 0:
         # Find the class with the maximum probability for each cell
         max_class_indices = np.argmax(class_probs, axis=1) # shape 500,
         # index of class
@@ -585,13 +606,11 @@ def aggregate_preds(query, ref_keys, tree):
 
     return query
 
-def eval(query, ref_keys, **kwargs):
+def eval(query, ref_keys):
     class_metrics = defaultdict(lambda: defaultdict(dict))
     for key in ref_keys:
         
-        #class_labels = query.obs[key].unique()
-        
-        threshold = kwargs.get('threshold', True)  # Or some other default value    
+       #threshold = kwargs.get('threshold', True)  # Or some other default value    
         class_labels = query.obs[key].unique()
         pred_classes = query.obs["predicted_" + key].unique()
         labels = list(set(class_labels).union(set(pred_classes)))
@@ -622,15 +641,16 @@ def eval(query, ref_keys, **kwargs):
         # Classification report for predictions
         class_metrics[key]["classification_report"] = classification_report(true_labels, predicted_labels, 
                                         labels=labels,output_dict=True, zero_division=np.nan)
-       
+
     return class_metrics
 
-def update_classification_report(report):
-    for label, metrics in report.items():
-        if metrics['support'] == 0:
-            metrics['recall'] = "nan" 
-            metrics['f1-score'] = "nan" 
-    return report
+def update_classification_report(class_metrics, ref_keys):
+    for key in ref_keys:
+        for key, val in class_metrics[key]["classification_report"].items():
+            if isinstance(val, dict):
+                if val['support'] == 0:
+                     val['f1-score'] = np.nan 
+    return class_metrics
 
 def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir):
     new_query_name = query_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
