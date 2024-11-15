@@ -3,15 +3,16 @@
 // Define the required input parameters
 params.organism = "homo_sapiens"
 params.census_version = "2024-07-01" // version of cellxgene census scvi model and data corpus for reference data
-params.tree_file = "${projectDir}/meta/master_hierarchy.json" // hierarchy to aggregate predicted classes
+params.tree_file = "$projectDir/meta/master_hierarchy.json" // hierarchy to aggregate predicted classes
 params.ref_keys = ["rachel_subclass", "rachel_class", "rachel_family"]  // transferred labels to evaluate
 params.test_name = "Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains" // name of query
-params.subsample_ref=10 // number of cells per cell type in ref to sample
+params.subsample_ref=5 // number of cells per cell type in ref to sample
 params.subsample_query=10 // number of total cells in query to sample
-params.results = "${projectDir}/results"  // Directory where outputs will be saved
-params.relabel_q = "${projectDir}/meta/gittings_relabel.tsv.gz" // harmonized label mapping for query
-params.relabel_r = "${projectDir}/meta/census_map_human.tsv" // harmonized label mapping for references
+params.results = "$projectDir/results"  // Directory where outputs will be saved
+params.relabel_q = "$projectDir/meta/gittings_relabel.tsv.gz" // harmonized label mapping for query
+params.relabel_r = "$projectDir/meta/census_map_human.tsv" // harmonized label mapping for references
 params.cutoff = 0 // do not threshold class probabilities 
+
 
 process runSetup {
     input:
@@ -19,12 +20,38 @@ process runSetup {
     val census_version
 
     output:
-    val "scvi-human-${census_version}/"
+    path "scvi-human-${census_version}/"
 
     script:
     """
-    python ${projectDir}/src/setup.py --organism ${organism} --census_version ${census_version}
+    python $projectDir/bin/setup.py --organism ${organism} --census_version ${census_version}
     """
+}
+
+process mapquery {
+    input:
+    val organism
+    val census_version
+    val model_path
+   // val subsample_query
+   // val test_name
+    path relabel_q
+    path query_file
+
+    output:
+   // path "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
+    path "${query_file.toString().replace('.h5ad','_processed.h5ad')}"
+
+script:
+
+"""
+
+python $projectDir/bin/process_query.py --organism ${organism} --census_version ${census_version} \\
+                        --model_path ${model_path} \\
+                        --relabel_path ${relabel_q} \\
+                        --query_path ${query_file}
+"""
+
 }
 
 
@@ -32,19 +59,19 @@ process getQuery {
     input:
     val organism
     val census_version
-    path model_path
+    val model_path
     val subsample_query
     val test_name
     val relabel_q
 
     output:
-    val "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
+    path "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
 
 script:
 
 """
 
-python ${projectDir}/src/get_query.py --organism ${organism} --census_version ${census_version} \\
+python $projectDir/bin/get_query.py --organism ${organism} --census_version ${census_version} \\
                         --model_path ${model_path} \\
                         --subsample_query ${subsample_query} \\
                         --test_name '${test_name}' \\
@@ -67,7 +94,7 @@ process getRefs {
     script:
     """
     # Run the python script to generate the files
-    python ${projectDir}/src/get_refs.py --organism ${organism} --census_version ${census_version} --subsample_ref ${subsample_ref} --relabel_path ${relabel_r}
+    python $projectDir/bin/get_refs.py --organism ${organism} --census_version ${census_version} --subsample_ref ${subsample_ref} --relabel_path ${relabel_r}
 
     # After running the python script, all .h5ad files will be saved in the refs/ directory inside a work directory
     """
@@ -82,18 +109,18 @@ process rfc_classify {
     val census_version
     val tree_file
     val query_path
-    val ref_path
+    path ref_path
     val ref_keys
     val cutoff
 
     output:
     path "f1_results/*f1_scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
     path "roc/**"
-    path "umap/**"
+    path "confusion/**"
 
     script:
     """
-    python ${projectDir}/src/rfc_classify.py --organism ${organism} --census_version ${census_version} \\
+    python $projectDir/bin/rfc_classify.py --organism ${organism} --census_version ${census_version} \\
                 --tree_file ${tree_file} --query_path ${query_path} --ref_path ${ref_path} --ref_keys ${ref_keys} \\
                 --cutoff ${cutoff}
  
@@ -115,7 +142,7 @@ process plot_results {
     script:
     
     """
-    python ${projectDir}/src/plot_f1_results.py --ref_keys ${ref_keys} --cutoff ${cutoff} --f1_results ${f1_scores}
+    python $projectDir/bin/plot_f1_results.py --ref_keys ${ref_keys} --cutoff ${cutoff} --f1_results ${f1_scores}
  
     """ 
 }
@@ -125,13 +152,23 @@ workflow {
 
     // Call the setup process to download the model
     model_path = runSetup(params.organism, params.census_version)
-    query_path=getQuery(params.organism, params.census_version, model_path, params.subsample_query, params.test_name, params.relabel_q)
+
+    Channel.fromPath("${projectDir}/queries/*")
+    .set{query_paths}
+
+    Channel.fromPath("${projectDir}/refs/*")
+    // .collect() 
+    .set { ref_paths }
+
+
+    // query_path=getQuery(params.organism, params.census_version, model_path, params.subsample_query, params.test_name, params.relabel_q)
     // You can chain additional processes here as needed
-    ref_paths = getRefs(params.organism, params.census_version, params.subsample_ref, params.relabel_r)
+    //ref_paths = getRefs(params.organism, params.census_version, params.subsample_ref, params.relabel_r)
         
-    
-    // Pass each file in ref_paths to rfc_classify
-    rfc_classify(params.organism, params.census_version, params.tree_file, query_path, ref_paths.flatMap(), params.ref_keys.join(' '), params.cutoff)
+    processed_queries = mapquery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
+
+    // Pass each file in ref_paths to rfc_classify using one query file at a time
+    rfc_classify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 
     // Collect all individual output files into a single channel
     f1_scores = rfc_classify.out.f1_score_channel
@@ -141,5 +178,5 @@ workflow {
 }
 
 // workflow.onComplete {
- //   log.info ( workflow.success ? "\nDone! See results directory at ${projectDir}/results" )
+ //   log.info ( workflow.success ? "\nDone! See results directory at $projectDir/results" )
 // }

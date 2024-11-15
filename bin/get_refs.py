@@ -36,7 +36,7 @@ def parse_arguments():
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     parser.add_argument('--subsample_ref', type=int, default=10)
     parser.add_argument('--relabel_path', type=str, default="meta/census_map_human.tsv")
-    
+    parser.add_argument('--ref_collections', type=str, nargs = '+', default = ["Transcriptomic cytoarchitecture reveals principles of human neocortex organization"]) 
 
     return parser.parse_args()
 
@@ -52,14 +52,15 @@ census_version = args.census_version
 subsample_ref = args.subsample_ref
 #subsample_query = args.subsample_query
 relabel_path = args.relabel_path
-
+ref_collections=args.ref_collections
 # Read the JSON tree file
 #with open(args.tree_file, 'r') as file:
    # tree = json.load(file)
 
 
 refs=adata_functions.get_census(organism=organism, 
-                                subsample=subsample_ref, split_column="tissue", dims=20, relabel_path=relabel_path)
+                                subsample=subsample_ref, split_column="tissue", 
+                                dims=20, relabel_path=relabel_path, ref_collections=ref_collections)
 
 print("finished fetching anndata")
 outdir="refs"

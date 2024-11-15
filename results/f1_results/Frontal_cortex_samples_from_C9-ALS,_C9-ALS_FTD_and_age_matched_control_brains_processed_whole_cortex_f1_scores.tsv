@@ -1,0 +1,21 @@
+query	reference	label	f1_score	macro_f1	micro_f1	weighted_f1	key	cutoff
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	PVALB	0.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	L2/3-6 IT	0.8571428571428571	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Astrocyte	1.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Endothelial	0.8235294117647058	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	VLMC	0.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Microglia	1.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	SST	0.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	L6 CT	0.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	OPC	1.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Oligodendrocyte	1.0	0.5680672268907563		0.9182072829131653	rachel_subclass	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Vascular	1.0	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Oligodendrocyte lineage	1.0	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	MGE	1.0	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	deep layer non-IT	0.0	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Microglia	1.0	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	L2/3-6 IT	0.8571428571428571	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Astrocyte	1.0	0.836734693877551		0.9809523809523809	rachel_class	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Non-neuron	1.0	1.0		1.0	rachel_family	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	GABAergic	1.0	1.0		1.0	rachel_family	0
+Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed	whole_cortex	Glutamatergic	1.0	1.0		1.0	rachel_family	0

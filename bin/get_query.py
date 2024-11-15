@@ -34,7 +34,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Download model file based on organism, census version, and tree file.")
     parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
-    #parser.add_argument('--tree_file', type=str, required=True, help='Path to the tree JSON file')
     #parser.add_argument('--model_path', type=str, required=True, help='Path to the scvi model file')
     parser.add_argument('--subsample_query', default=10, type=int)
     #parser.add_argument('--projPath', type=str, default=".")
@@ -50,13 +49,10 @@ args = parse_arguments()
 organism = args.organism
 census_version = args.census_version
 #model_path = args.model_path
-#tree_file = args.tree_file
 subsample_query = args.subsample_query
 test_name=args.test_name
 relabel_path=args.relabel_path
-# Read the JSON tree file
-#with open(args.tree_file, 'r') as file:
-   # tree = json.load(file)
+
     
 #for query_name in test_names:
 query=get_test_data(census_version=census_version, test_name=test_name, 

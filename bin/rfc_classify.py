@@ -119,23 +119,23 @@ df.to_csv(os.path.join(outdir,f"{query_name}_{ref_name}_f1_scores.tsv"), sep="\t
 
 
 
-outdir=os.path.join("umap",query_name,ref_name)
-os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
+#outdir=os.path.join("umap",query_name,ref_name)
+#os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
 
-with plt.rc_context({'figure.figsize': (15, 15), 'savefig.dpi': 300}):  # Adjust size and dpi as needed                           
-    # Plot the UMAP
-    sc.pl.umap(
-        query, 
-        color=["predicted_" + key for key in ref_keys] + [key for key in ref_keys] + ["confidence"], 
-        ncols=2, na_in_legend=True, legend_fontsize=20, 
-        show=False  # Prevents immediate display, so we can save it with plt
-    )
+#with plt.rc_context({'figure.figsize': (15, 15), 'savefig.dpi': 300}):  # Adjust size and dpi as needed                           
+    ## Plot the UMAP
+    #sc.pl.umap(
+        #query, 
+        #color=["predicted_" + key for key in ref_keys] + [key for key in ref_keys] + ["confidence"], 
+        #ncols=2, na_in_legend=True, legend_fontsize=20, 
+        #show=False  # Prevents immediate display, so we can save it with plt
+    #)
 
-    # Save the figure using plt.savefig()
-    plt.savefig(
-        os.path.join(outdir,"umap.png"), 
-        dpi=300, 
-        bbox_inches='tight'
-    )
+    ## Save the figure using plt.savefig()
+    #plt.savefig(
+        #os.path.join(outdir,"umap.png"), 
+        #dpi=300, 
+        #bbox_inches='tight'
+    #)
 
-plt.close()
+#plt.close()

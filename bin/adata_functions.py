@@ -148,6 +148,7 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
     return refs
 
 def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=10, split_column="tissue", dims=20, 
+               ref_collections=["Transcriptomic cytoarchitecture reveals principles of human neocortex organization"],
                relabel_path="/biof501_proj/meta/relabel/census_map_human.tsv"):
 
     census = cellxgene_census.open_soma(census_version=census_version)
@@ -156,8 +157,7 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=1
         value_filter=(
             "tissue_general == 'brain' and "
             "is_primary_data == True and "
-            "disease == 'normal' " # and "
-            #"tissue in ['dorsolateral prefrontal cortex', 'middle temporal gyrus', 'primary visual cortex', 'primary motor cortex', 'primary somatosensory cortex', 'primary auditory cortex', 'anterior cingulate cortex'] " 
+            "disease == 'normal' "
         ))
     
     brain_obs = brain_obs.merge(dataset_info, on="dataset_id", suffixes=(None,"_y"))
@@ -166,15 +166,11 @@ def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=1
     # Filter based on organism
     if organism == "homo_sapiens":
         brain_obs_filtered = brain_obs[
-            brain_obs['collection_name'].isin([
-               # "SEA-AD: Seattle Alzheimer’s Disease Brain Cell Atlas", taking this out to speed things up
-                "Transcriptomic cytoarchitecture reveals principles of human neocortex organization"
-            ])
-        ]
+            brain_obs['collection_name'].isin(ref_collections)]
         brain_obs_filtered = brain_obs_filtered[~brain_obs_filtered['cell_type'].isin(["unknown", "glutamatergic neuron"])]
     elif organism == "mus_musculus":
         brain_obs_filtered = brain_obs[
-            brain_obs['collection_name'].isin(["A taxonomy of transcriptomic cell types across the isocortex and hippocampal formation"]) 
+            brain_obs['collection_name'].isin(ref_collections) 
         ]
     else:
        raise ValueError("Unsupported organism")
