@@ -537,7 +537,6 @@ def check_column_ties(probabilities, class_labels):
     return tie_rows, tie_columns
 
 def classify_cells(query, ref_keys, cutoff, probabilities, tree):
-    threshold = kwargs.get('threshold', True)  # Or some other default value
     class_metrics = {}
  #   for key in ref_keys:  
     key = ref_keys[0]
