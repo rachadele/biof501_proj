@@ -475,25 +475,25 @@ def process_all_rocs(rocs):
     return df
 
 
-def process_roc(roc):
+def process_roc(rocs, ref_name, query_name):
     data=[]
     for key, roc in rocs.items():
         if roc:
             for class_label, class_data in roc.items():
                 if class_data:
                         data.append({
-                                "ref": ref,
-                                "query": query,
+                                "ref": ref_name,
+                                "query": query_name,
                                 "key": key, 
                                 "label": class_label, 
                                 "roc": class_data["auc"],
-                                "threshold": class_data["optimal_threshold"]
+                                "optimal threshold": class_data["optimal_threshold"]
                               #   f'{var}': class_data[var]
                             })
 
     # Create DataFrame from the collected data
-    df = pd.DataFrame(data)
-    return df 
+    roc_df = pd.DataFrame(data)
+    return roc_df 
 
 def plot_distribution(df, projPath, var):
     plt.figure(figsize=(8, 6))
@@ -538,50 +538,46 @@ def check_column_ties(probabilities, class_labels):
 
 def classify_cells(query, ref_keys, cutoff, probabilities, tree):
     class_metrics = {}
- #   for key in ref_keys:  
+    
+    # Only use the first ref_key
     key = ref_keys[0]
-    class_metrics[key]={}
-    class_labels = probabilities[key]["class_labels"]
+    class_metrics[key] = {}
+
+    # Extract the class labels and probabilities (DataFrame structure)
+    class_labels = probabilities.columns.values  # Class labels are the column names
+    class_probs = probabilities.values  # Probabilities as a numpy array
+    
     predicted_classes = []
-        # Convert thresholds to a numpy array for faster comparison
-    #threshold_array = np.array(cutoff * query.n_obs)
-    # Vectorized probability retrieval and decision-making
-    class_probs = np.array([probabilities[key]["probabilities"][i] for i in range(query.n_obs)])  # Shape: (query.n_obs, num_classes)
-    class_labels = np.array(probabilities[key]["class_labels"])  # Shape: (num_classes,)
-    # Use np.argmax to find the class with the highest probability
+    
     if cutoff > 0:
         # Find the class with the maximum probability for each cell
-        max_class_indices = np.argmax(class_probs, axis=1) # shape 500,
-        # index of class
-        max_class_probs = np.max(class_probs, axis=1) # shape 500,
-        #max probabilitiy
-        # need to break ties somehow here so that levels agree
-        # fml
-            
+        max_class_indices = np.argmax(class_probs, axis=1)  # Get the index of the max probability
+        max_class_probs = np.max(class_probs, axis=1)  # Get the max probability
+        
         # Set predicted classes to "unknown" if the max probability does not meet the threshold
         predicted_classes = [
             class_labels[i] if prob > cutoff else "unknown"
-            for cell, (i, prob) in enumerate(zip(max_class_indices, max_class_probs))
-        ]  # i = class index
-            # prob = prob
-            # cell = cell index
+            for i, prob in zip(max_class_indices, max_class_probs)
+        ]
     else:
         # Direct prediction without threshold filtering
-        predicted_classes = class_labels[np.argmax(class_probs, axis=1)]          
-            
+        predicted_classes = class_labels[np.argmax(class_probs, axis=1)]
+    
     # Store predictions and confidence in `query`
     query.obs["predicted_" + key] = predicted_classes
-    query.obs["confidence"] = np.max(probabilities[key]["probabilities"], axis=1)
+    query.obs["confidence"] = np.max(class_probs, axis=1)  # Store max probability as confidence
     
+    # Aggregate predictions (you can keep this logic as needed)
     query = aggregate_preds(query, ref_keys, tree)
+    
     return query
+
 
 def aggregate_preds(query, ref_keys, tree):
     
     preds = np.array(query.obs["predicted_" + ref_keys[0]])
     query.obs.index = query.obs.index.astype(int)
-  #  for label in pred_levels:
-   #     find_node
+
     for higher_level_key in ref_keys[1:]: 
         query.obs["predicted_" + higher_level_key] = "unknown"  # Initialize to account for unknowns preds
         # Skip the first (granular) level

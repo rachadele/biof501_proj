@@ -32,44 +32,35 @@ import json
 # Function to parse command line arguments
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Download model file based on organism, census version, and tree file.")
-    parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
-    parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
-    #parser.add_argument('--tree_file', type=str, required=True, help='Path to the tree JSON file')
-    parser.add_argument('--model_path', type=str, required=True, help='Path to the scvi model file')
+    parser.add_argument('--model_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/scvi-human-2024-07-01", help='Path to the scvi model file')
  ##   parser.add_argument('--subsample_query', default=10, type=int)
-    #parser.add_argument('--projPath', type=str, default=".")
-  ##  parser.add_argument('--test_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
-    parser.add_argument('--relabel_path', type=str, default="/biof501_proj/meta/gittings_relabel.tsv.gz")
-    parser.add_argument('--query_path', type=str, required=True)
- 
-    return parser.parse_args()
+  ##  parser.add_argument('--query_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
+    parser.add_argument('--relabel_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/meta/gittings_relabel.tsv.gz")
+    parser.add_argument('--query_path', type=str)
+    parser.add_argument('--batch_key', type=str, default="sample")
+    if __name__ == "__main__":
+        known_args, _ = parser.parse_known_args()
+        return known_args
 
-# Parse command line arguments
-args = parse_arguments()
+def main():
+  # Parse command line arguments
+  args = parse_arguments()
 
 
-# Set organism and census_version from arguments
-organism = args.organism
-census_version = args.census_version
-model_path = args.model_path
-#tree_file = args.tree_file
-##subsample_query = args.subsample_query
-##test_name=args.test_name
-query_path =args.query_path
-relabel_path=args.relabel_path
-# Read the JSON tree file
-#with open(args.tree_file, 'r') as file:
-   # tree = json.load(file)
-    
-#for query_name in test_names:
-#query=get_test_data(census_version=census_version, test_name=test_name, 
-  #                              subsample=subsample_query, organism=organism, split_key="dataset_title")
+  # Set organism and census_version from arguments
 
-query = ad.read_h5ad(query_path)
-query = relabel(query,relabel_path=relabel_path, join_key="observation_joinid",sep="\t")
-query = process_query(query, model_path)
-#new_query_name = test_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
-new_query_name = os.path.basename(query_path).replace(".h5ad","_processed")
-#outdir="queries"
-#s.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
-query.write(f"{new_query_name}.h5ad")
+  model_path = args.model_path
+  #tree_file = args.tree_file
+  ##subsample_query = args.subsample_query
+  ##test_name=args.test_name
+  query_path =args.query_path
+  relabel_path=args.relabel_path
+  
+  query = ad.read_h5ad(query_path)
+  query = relabel(query,relabel_path=relabel_path, join_key="observation_joinid",sep="\t")
+  query = process_query(query, model_path)
+  new_query_name = os.path.basename(query_path).replace(".h5ad","_processed")
+  query.write(f"{new_query_name}.h5ad")
+  
+  if __name__ == "__main__":
+    main()

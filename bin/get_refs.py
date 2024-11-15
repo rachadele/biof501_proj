@@ -35,39 +35,37 @@ def parse_arguments():
     parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     parser.add_argument('--subsample_ref', type=int, default=10)
-    parser.add_argument('--relabel_path', type=str, default="meta/census_map_human.tsv")
+    parser.add_argument('--relabel_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/meta/census_map_human.tsv")
     parser.add_argument('--ref_collections', type=str, nargs = '+', default = ["Transcriptomic cytoarchitecture reveals principles of human neocortex organization"]) 
 
-    return parser.parse_args()
+    if __name__ == "__main__":
+        known_args, _ = parser.parse_known_args()
+        return known_args
 
-# Parse command line arguments
-args = parse_arguments()
-
-
-# Set organism and census_version from arguments
-organism = args.organism
-census_version = args.census_version
-#model_file_path = args.model_file_path
-#tree_file = args.tree_file
-subsample_ref = args.subsample_ref
-#subsample_query = args.subsample_query
-relabel_path = args.relabel_path
-ref_collections=args.ref_collections
-# Read the JSON tree file
-#with open(args.tree_file, 'r') as file:
-   # tree = json.load(file)
+def main():
+   # Parse command line arguments
+   args = parse_arguments()
 
 
-refs=adata_functions.get_census(organism=organism, 
-                                subsample=subsample_ref, split_column="tissue", 
-                                dims=20, relabel_path=relabel_path, ref_collections=ref_collections)
+   # Set organism and census_version from arguments
+   organism = args.organism
+   census_version = args.census_version
+   subsample_ref = args.subsample_ref
+   relabel_path = args.relabel_path
+   ref_collections=args.ref_collections
 
-print("finished fetching anndata")
-outdir="refs"
-os.makedirs(outdir, exist_ok=True) 
+   refs=adata_functions.get_census(organism=organism, 
+                                 subsample=subsample_ref, split_column="tissue", 
+                                 dims=20, relabel_path=relabel_path, ref_collections=ref_collections)
 
-for ref_name, ref in refs.items():
-    new_ref_name = ref_name.replace(" ", "_").replace("\\/", "_").replace("(","").replace(")","")
- # Create the directory if it doesn't exist
-    ref.write(os.path.join(outdir,f"{new_ref_name}.h5ad"))
-    
+   print("finished fetching anndata")
+   outdir="refs"
+   os.makedirs(outdir, exist_ok=True) 
+
+   for ref_name, ref in refs.items():
+      new_ref_name = ref_name.replace(" ", "_").replace("\\/", "_").replace("(","").replace(")","")
+   # Create the directory if it doesn't exist
+      ref.write(os.path.join(outdir,f"{new_ref_name}.h5ad"))
+      
+if __name__ == "__main__":
+    main()

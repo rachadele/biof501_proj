@@ -17,11 +17,10 @@ process runSetup {
 
 process mapQuery {
     input:
-    val organism
-    val census_version
     val model_path
     path relabel_q
     path query_file
+    val batch_key
 
     output:
     path "${query_file.toString().replace('.h5ad','_processed.h5ad')}"
@@ -30,67 +29,41 @@ script:
 
 """
 
-python $projectDir/bin/process_query.py --organism ${organism} --census_version ${census_version} \\
+python $projectDir/bin/process_query.py \\
                         --model_path ${model_path} \\
                         --relabel_path ${relabel_q} \\
-                        --query_path ${query_file}
+                        --query_path ${query_file} \\
+                        --batch_key ${batch_key}
 """
 
 }
 
 
-process getQuery {
-    input:
-    val organism
-    val census_version
-    val model_path
-    val subsample_query
-    val test_name
-    val relabel_q
+// process getRefs {
+    // input:
+    // val organism
+    // val census_version
+    // val subsample_ref
+    // val relabel_r
 
-    output:
-    path "${test_name.replace(' ', '_').replace('/', '_')}.h5ad"
-
-script:
-
-"""
-
-python $projectDir/bin/get_query.py --organism ${organism} --census_version ${census_version} \\
-                        --model_path ${model_path} \\
-                        --subsample_query ${subsample_query} \\
-                        --test_name '${test_name}' \\
-                        --relabel_path ${relabel_q}
-"""
-
-}
-
-process getRefs {
-    input:
-    val organism
-    val census_version
-    val subsample_ref
-    val relabel_r
-
-    output:
-    path "refs/*.h5ad", emit: ref_paths
+    // output:
+    // path "refs/*.h5ad", emit: ref_paths
 
 
-    script:
-    """
-    # Run the python script to generate the files
-    python $projectDir/bin/get_refs.py --organism ${organism} --census_version ${census_version} --subsample_ref ${subsample_ref} --relabel_path ${relabel_r}
+    // script:
+    // """
+    // # Run the python script to generate the files
+    // python $projectDir/bin/get_refs.py --organism ${organism} --census_version ${census_version} --subsample_ref ${subsample_ref} --relabel_path ${relabel_r}
 
-    # After running the python script, all .h5ad files will be saved in the refs/ directory inside a work directory
-    """
-}
+    // # After running the python script, all .h5ad files will be saved in the refs/ directory inside a work directory
+    // """
+// }
 
 process rfClassify {
 
     publishDir "${params.results}", mode: "copy"
 
     input:
-    val organism
-    val census_version
     val tree_file
     val query_path
     path ref_path
@@ -101,11 +74,11 @@ process rfClassify {
     path "f1_results/*f1_scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
     path "roc/**"
     path "confusion/**"
+    path "probs/**"
 
     script:
     """
-    python $projectDir/bin/rfc_classify.py --organism ${organism} --census_version ${census_version} \\
-                --tree_file ${tree_file} --query_path ${query_path} --ref_path ${ref_path} --ref_keys ${ref_keys} \\
+    python $projectDir/bin/rfc_classify.py --tree_file ${tree_file} --query_path ${query_path} --ref_path ${ref_path} --ref_keys ${ref_keys} \\
                 --cutoff ${cutoff}
  
     """
@@ -144,7 +117,7 @@ workflow {
     // .collect() 
     .set { ref_paths }
     
-    processed_queries = mapQuery(params.organism, params.census_version, model_path, params.relabel_q, query_paths) 
+    processed_queries = mapQuery(model_path, params.relabel_q, query_paths, params.batch_key) 
 
     // Pass each file in ref_paths to rfc_classify using one query file at a time
     rfClassify(params.organism, params.census_version, params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)

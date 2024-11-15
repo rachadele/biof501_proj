@@ -34,33 +34,37 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Download model file based on organism, census version, and tree file.")
     parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
     parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
-    #parser.add_argument('--model_path', type=str, required=True, help='Path to the scvi model file')
     parser.add_argument('--subsample_query', default=10, type=int)
-    #parser.add_argument('--projPath', type=str, default=".")
     parser.add_argument('--test_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
     parser.add_argument('--relabel_path', type=str, default="meta/gittings_relabel.tsv.gz")
-    return parser.parse_args()
-
-# Parse command line arguments
-args = parse_arguments()
-
-
-# Set organism and census_version from arguments
-organism = args.organism
-census_version = args.census_version
-#model_path = args.model_path
-subsample_query = args.subsample_query
-test_name=args.test_name
-relabel_path=args.relabel_path
-
     
-#for query_name in test_names:
-query=get_test_data(census_version=census_version, test_name=test_name, 
-                                subsample=subsample_query, organism=organism, split_key="dataset_title")
-query = relabel(query,relabel_path=relabel_path,
-join_key="observation_joinid",sep="\t")
-#query = process_query(query, model_path)
-new_query_name = test_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
-outdir=os.path.join("queries")
-os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
-query.write(os.path.join(outdir,f"{new_query_name}.h5ad"))
+    if __name__ == "__main__":
+        known_args, _ = parser.parse_known_args()
+        return known_args
+
+def main():
+    # Parse command line arguments
+    args = parse_arguments()
+
+
+    # Set organism and census_version from arguments
+    organism = args.organism
+    census_version = args.census_version
+    subsample_query = args.subsample_query
+    test_name=args.test_name
+    relabel_path=args.relabel_path
+
+        
+    #for query_name in test_names:
+    query=get_test_data(census_version=census_version, test_name=test_name, 
+                                    subsample=subsample_query, organism=organism, split_key="dataset_title")
+    query = relabel(query,relabel_path=relabel_path,
+    join_key="observation_joinid",sep="\t")
+    new_query_name = test_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
+    outdir=os.path.join("queries")
+    os.makedirs(outdir, exist_ok=True)  # Create the directory if it doesn't exist
+    query.write(os.path.join(outdir,f"{new_query_name}.h5ad"))
+    
+    
+if __name__ == "__main__":
+    main()
