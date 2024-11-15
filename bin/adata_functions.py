@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 scvi.settings.seed = 0
 from pathlib import Path
 #current_directory = Path.cwd()
-projPath = "/space/grp/rschwartz/rschwartz/biof501_proj/bin"
+projPath = "/space/grp/rschwartz/rschwartz/biof501_proj/"
 
 import subprocess
 
@@ -92,7 +92,7 @@ def relabel(adata, relabel_path, join_key, sep="\t"):
 
 
 def extract_data(data, filtered_ids, subsample=10, organism=None, census=None, 
-    obs_filter=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="/biof501_proj/meta/relabel/census_map_human.tsv'"):
+    obs_filter=None, cell_columns=None, dataset_info=None, dims=20, relabel_path="biof501_proj/meta/relabel/census_map_human.tsv'"):
     
     brain_cell_subsampled_ids = subsample_cells(data, filtered_ids, subsample)
     # Assuming get_seurat is defined to return an AnnData object
@@ -149,7 +149,7 @@ def split_and_extract_data(data, split_column, subsample=500, organism=None, cen
 
 def get_census(census_version="2024-07-01", organism="homo_sapiens", subsample=10, split_column="tissue", dims=20, 
                ref_collections=["Transcriptomic cytoarchitecture reveals principles of human neocortex organization"],
-               relabel_path="/biof501_proj/meta/relabel/census_map_human.tsv"):
+               relabel_path=f"{projPath}meta/census_map_human.tsv"):
 
     census = cellxgene_census.open_soma(census_version=census_version)
     dataset_info = census.get("census_info").get("datasets").read().concat().to_pandas()

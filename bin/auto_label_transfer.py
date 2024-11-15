@@ -24,8 +24,8 @@ import importlib
 import adata_functions
 from adata_functions import *
 from pathlib import Path
-current_directory = Path.cwd()
-projPath = current_directory.parent
+#current_directory = Path.cwd()
+projPath = "/space/grp/rschwartz/rschwartz/biof501_proj/"
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
@@ -63,7 +63,7 @@ model_file_path=setup(organism="homo_sapiens", version="2024-07-01")
 
 
 refs=adata_functions.get_census(organism="homo_sapiens", 
-                                subsample=10, split_column="tissue", dims=20)
+                                subsample=10, split_column="tissue", dims=20, relabel_path=f"{projPath}meta/census_map_human.tsv")
 
 
 tests={}
@@ -74,9 +74,9 @@ for test_name in test_names:
 
 queries = {}                    
 for test_name,test in tests.items():
-    test = relabel(test,relabel_path=os.path.join(projPath,"meta","relabel","gittings_relabel.tsv.gz"),
+    test = relabel(test,relabel_path=os.path.join(projPath,"meta","gittings_relabel.tsv.gz"),
                         join_key="observation_joinid",sep="\t")
-    queries[test_name] = process_query(test, model_file_path, projPath=projPath)
+    queries[test_name] = process_query(test, model_file_path)
 
 
 
