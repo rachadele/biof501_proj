@@ -61,7 +61,7 @@ python $projectDir/bin/process_query.py \\
 
 process rfClassify {
 
-    publishDir "${params.results}", mode: "copy"
+    publishDir "${params.outdir}", mode: "copy"
 
     input:
     val tree_file
@@ -77,6 +77,10 @@ process rfClassify {
     path "probs/**"
     path "predicted_meta/**"
 
+  //  publish:
+
+
+
     script:
     """
     python $projectDir/bin/rfc_classify.py --tree_file ${tree_file} --query_path ${query_path} --ref_path ${ref_path} --ref_keys ${ref_keys} \\
@@ -87,7 +91,7 @@ process rfClassify {
 }
 
 process plot_results {
-    publishDir "${params.results}", mode: "copy"
+    publishDir "${params.outdir}", mode: "copy"
 
     input:
     val ref_keys
