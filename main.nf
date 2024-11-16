@@ -75,6 +75,7 @@ process rfClassify {
     path "roc/**"
     path "confusion/**"
     path "probs/**"
+    path "predicted_meta/**"
 
     script:
     """

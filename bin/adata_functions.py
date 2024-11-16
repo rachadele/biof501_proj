@@ -665,8 +665,8 @@ def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir)
     # Save the plot
    # output_dir = os.path.join(projPath, 'results', 'confusion')
     
-    os.makedirs(os.path.join(output_dir, new_query_name, new_ref_name), exist_ok=True)  # Create the directory if it doesn't exist
-    plt.savefig(os.path.join(os.path.join(output_dir, new_query_name, new_ref_name),f"{key}_confusion.png"))
+    #os.makedirs(os.path.join(output_dir, new_query_name, new_ref_name), exist_ok=True)  # Create the directory if it doesn't exist
+    plt.savefig(os.path.join(output_dir,f"{key}_confusion.png"))
     plt.close() 
 
 
@@ -771,15 +771,34 @@ def combine_f1_scores(class_metrics, ref_keys):
 def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
     os.makedirs(outpath, exist_ok=True) 
     # Create a figure to hold the plots
-    fig, axes = plt.subplots(ncols=len(all_f1_scores), nrows=1, figsize=(40, 10))
-    
-    for idx, (key, df) in enumerate(all_f1_scores.items()):
-        for query in df['query'].unique():
-        # Pivot the DataFrame to get references as rows and labels + queries as columns
-            pivot_df = df.pivot_table(index='reference', columns='label', values='f1_score')
+    sns.set(style="whitegrid")
 
-        # Plot heatmap for label-level F1 scores with flipped axes
-            sns.heatmap(pivot_df, annot=True, cmap='YlOrRd', cbar_kws={'label': 'F1 Score'}, ax=axes[idx])
+    os.makedirs(outpath, exist_ok=True)
+    # Create a figure to hold the plots
+    fig, axes = plt.subplots(ncols=len(all_f1_scores), nrows=1, figsize=(40, 10))
+
+    for idx, (key, df) in enumerate(all_f1_scores.items()):
+     #   df.replace('nan', np.nan, inplace=True)
+        for query in df['query'].unique():
+            # Pivot the DataFrame to get references as rows and labels + queries as columns
+            pivot_df = df.pivot_table(index='reference', columns='label', values='f1_score')
+        #    pivot_df = pivot_df.apply(pd.to_numeric, errors='coerce')
+            # Create a mask for NaN values
+            mask = pivot_df.isnull()
+
+            # Plot heatmap for label-level F1 scores with flipped axes
+            sns.heatmap(
+                pivot_df, 
+                annot=True, 
+                cmap='YlOrRd', 
+                cbar_kws={'label': 'F1 Score'}, 
+                mask=mask, 
+                ax=axes[idx], 
+                linewidths=0.5, 
+                linecolor='black',
+                annot_kws={"size": 10, "color": "black"},
+            )
+            
             axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=90)
             axes[idx].set_title(f'F1 Scores for {key} at threshold = {threshold:.2f}', fontsize=25)
             axes[idx].set_ylabel('Reference', fontsize=30)
@@ -787,9 +806,8 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
 
     # Adjust layout to avoid overlap
     plt.tight_layout()
-    plt.savefig(os.path.join(outpath,'label_f1_scores.png'))  # Change the file name as needed
+    plt.savefig(os.path.join(outpath, 'label_f1_scores.png'))  # Change the file name as needed
     plt.close()
-     
  ## Now create a final heatmap for macro, micro, and weighted F1 scores
     final_f1_data = pd.DataFrame()
     for key, df in all_f1_scores.items():

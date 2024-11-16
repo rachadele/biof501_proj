@@ -36,7 +36,7 @@ def parse_arguments():
   #  parser.add_argument('--organism', type=str, default='homo_sapiens', help='Organism name (e.g., homo_sapiens)')
   #  parser.add_argument('--census_version', type=str, default='2024-07-01', help='Census version (e.g., 2024-07-01)')
     parser.add_argument('--tree_file', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/meta/master_hierarchy.json")
-    parser.add_argument('--query_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/queries/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains.h5ad")
+    parser.add_argument('--query_path', type=str, default="Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed.h5ad")
     parser.add_argument('--ref_paths', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/refs/whole_cortex.h5ad") #nargs ="+")
     parser.add_argument('--ref_keys', type=str, nargs='+', default=["rachel_subclass", "rachel_class", "rachel_family"])
     parser.add_argument('--cutoff', type=float, default=0, help = "Cutoff threshold for positive classification")
@@ -93,7 +93,6 @@ def main():
     os.makedirs(outdir, exist_ok=True)
 
     plot_roc_curves(metrics=rocs, title=f"{query_name} vs {ref_name}", save_path=os.path.join(outdir, "roc_results.png"))
-
     roc_df = process_roc(rocs, ref_name=ref_name, query_name=query_name)
     roc_df.to_csv(os.path.join(outdir,"roc_df.tsv"),sep="\t")
     
@@ -101,12 +100,18 @@ def main():
     
     # Classify cells and evaluate
     query = classify_cells(query, ref_keys, cutoff=cutoff, probabilities=prob_df, tree=tree)
+    outdir = os.path.join("predicted_meta", query_name, ref_name)
+    os.makedirs(outdir, exist_ok=True)
+    query.obs.to_csv(os.path.join(outdir,f"predictions.{cutoff}.tsv"), sep="\t")
+
+    
     class_metrics = eval(query, ref_keys)
     class_metrics = update_classification_report(class_metrics, ref_keys)
 
     # Plot confusion matrices
     for key in ref_keys:
         outdir = os.path.join("confusion", query_name, ref_name)
+        os.makedirs(outdir, exist_ok=True)
         plot_confusion_matrix(query_name, ref_name, key, class_metrics[key]["confusion"], output_dir=outdir)
 
     # Collect F1 scores

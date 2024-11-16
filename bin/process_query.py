@@ -36,7 +36,7 @@ def parse_arguments():
  ##   parser.add_argument('--subsample_query', default=10, type=int)
   ##  parser.add_argument('--query_name', type=str, default="Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains")
     parser.add_argument('--relabel_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/meta/gittings_relabel.tsv.gz")
-    parser.add_argument('--query_path', type=str)
+    parser.add_argument('--query_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/queries/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains.h5ad")
     parser.add_argument('--batch_key', type=str, default="sample")
     if __name__ == "__main__":
         known_args, _ = parser.parse_known_args()

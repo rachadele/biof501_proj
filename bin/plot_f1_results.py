@@ -36,40 +36,49 @@ def parse_arguments():
     parser.add_argument('--ref_keys', type=str, nargs='+', default=["rachel_subclass", "rachel_class", "rachel_family"])
     parser.add_argument('--cutoff', type=float, default=0, help = "Cutoff used for classification")
     parser.add_argument('--f1_results', type=str, required=True, nargs='+')
-    return parser.parse_args()
+    #return parser.parse_args()
 
-# Parse command line arguments
-args = parse_arguments()
-
-
-# Set organism and census_version from arguments
-ref_keys=args.ref_keys
-f1_results = args.f1_results#.replace("[", "").replace("]", "").split(",")
-cutoff=args.cutoff
-
-all_f1_scores = {}
-f1_scores=pd.DataFrame()
-
-for file in f1_results:
-    # Read each file into a DataFrame
-    x = pd.read_csv(file, sep="\t")
     
-    # Get the unique keys from the 'key' column
-    keys = x["key"].unique()
+    if __name__ == "__main__":
+        known_args, _ = parser.parse_known_args()
+        return known_args
     
-    # Loop through each unique key
-    for key in keys:
-        # Filter rows where the 'key' matches
-        subset = x[x["key"] == key]
+def main():
+    # Parse command line arguments
+    args = parse_arguments()
+
+
+    # Set organism and census_version from arguments
+    ref_keys=args.ref_keys
+    f1_results = args.f1_results#.replace("[", "").replace("]", "").split(",")
+    cutoff=args.cutoff
+
+    all_f1_scores = {}
+    #f1_scores=pd.DataFrame()
+
+    for file in f1_results:
+        # Read each file into a DataFrame
+        x = pd.read_csv(file, sep="\t")
         
-        # If this key doesn't exist in the dictionary, initialize an empty DataFrame
-        if key not in all_f1_scores:
-            all_f1_scores[key] = subset
-        else:
-            # If the key already exists, concatenate the new subset to the existing DataFrame
-            all_f1_scores[key] = pd.concat([all_f1_scores[key], subset], ignore_index=True)
+        # Get the unique keys from the 'key' column
+        keys = x["key"].unique()
+        
+        # Loop through each unique key
+        for key in keys:
+            # Filter rows where the 'key' matches
+            subset = x[x["key"] == key]
+            
+            # If this key doesn't exist in the dictionary, initialize an empty DataFrame
+            if key not in all_f1_scores:
+                all_f1_scores[key] = subset
+            else:
+                # If the key already exists, concatenate the new subset to the existing DataFrame
+                all_f1_scores[key] = pd.concat([all_f1_scores[key], subset], ignore_index=True)
 
+        
+
+    plot_f1_heatmaps(all_f1_scores, threshold=cutoff, outpath="f1_plots", ref_keys=ref_keys)
+
+if __name__ == "__main__":
+    main()
     
-
-plot_f1_heatmaps(all_f1_scores, threshold=cutoff, outpath="f1_plots", ref_keys=ref_keys)
-
