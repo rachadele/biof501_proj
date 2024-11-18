@@ -71,11 +71,14 @@ process rfClassify {
     val cutoff
 
     output:
-    path "f1_results/*f1_scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
+    path "f1_results/*f1.scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
     path "roc/**"
+    path "roc/*tsv"
     path "confusion/**"
     path "probs/**"
-    path "predicted_meta/**"
+    path "probs/*tsv"
+    //path "predicted_meta/**"
+    path "predicted_meta/*tsv"
 
   //  publish:
 
