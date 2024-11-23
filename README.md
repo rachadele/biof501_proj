@@ -36,8 +36,9 @@ This pipeline evalutates a random forest classification task on a toy query data
    c. ROC curves for each individual label are computed and plotted.
    d. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
    e. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
-4. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
-5. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
+   f. Cell metadata with predictions is written to `/Users/Rachel/Documents/BIOF501/biof501_proj/images/results/predicted_meta`
+5. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
+6. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
 
 ### Source code 
 
@@ -56,6 +57,7 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 ![](./images/results/f1_plots/label_f1_scores.png)
 
 ![](./images/results/dists/auc_distribution.png)
+![](./images/results/dists/optimal_threshold_distribution.png)
 ![](./images/results/roc/optimal_threshold_distribution.png)
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
