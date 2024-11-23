@@ -85,7 +85,7 @@ def main():
     #save data frame to inteim probs/ dir
     outdir="probs"
     os.makedirs(outdir, exist_ok=True)
-    prob_df.to_csv(os.path.join(outdir,f"{query_name}_{ref_name}.prob.df.tsv"),sep="\t")
+    prob_df.to_csv(os.path.join(outdir,f"{query_name}_{ref_name}.prob.df.tsv"),sep="\t", index=False,)
  
     rocs = roc_analysis(probabilities=probs, query=query, key=ref_keys[0])
 
@@ -94,7 +94,7 @@ def main():
     plot_roc_curves(metrics=rocs, title=f"{query_name} vs {ref_name}", save_path=os.path.join(outdir, "roc_results.png"))
     
     roc_df = process_roc(rocs, ref_name=ref_name, query_name=query_name)
-    roc_df.to_csv(os.path.join("roc", f"{query_name}_{ref_name}.roc.df.tsv"),sep="\t")
+    roc_df.to_csv(os.path.join("roc", f"{query_name}_{ref_name}.roc.df.tsv"),sep="\t", index=False,)
     
     ## eventually make this into a new script that takes probabilities matrix
     
@@ -102,7 +102,7 @@ def main():
     query = classify_cells(query, ref_keys, cutoff=cutoff, probabilities=prob_df, tree=tree)
     outdir = "predicted_meta"
     os.makedirs(outdir, exist_ok=True)
-    query.obs.to_csv(os.path.join(outdir,f"{query_name}_{ref_name}.predictions.{cutoff}.tsv"), sep="\t")
+    query.obs.to_csv(os.path.join(outdir,f"{query_name}_{ref_name}.predictions.{cutoff}.tsv"), index=False, sep="\t")
 
     
     class_metrics = eval(query, ref_keys)

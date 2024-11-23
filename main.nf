@@ -72,12 +72,11 @@ process rfClassify {
 
     output:
     path "f1_results/*f1.scores.tsv", emit: f1_score_channel  // Match TSV files in f1_results
+    path "roc/*.tsv", emit: auc_channel
     path "roc/**"
-    path "roc/*tsv"
     path "confusion/**"
     path "probs/**"
     path "probs/*tsv"
-    //path "predicted_meta/**"
     path "predicted_meta/*tsv"
 
   //  publish:
@@ -93,7 +92,24 @@ process rfClassify {
 
 }
 
-process plot_results {
+process plot_auc_dist {
+    publishDir "${params.outdir}", mode: "copy"
+
+    input:
+    file auc
+
+    output:
+    path "dists/*distribution.png" // Wildcard to capture all relevant output files
+
+    script:
+    
+    """
+    python $projectDir/bin/plot_auc_dist.py --roc_paths ${auc}
+ 
+    """ 
+}
+
+process plot_f1_results {
     publishDir "${params.outdir}", mode: "copy"
 
     input:
@@ -130,11 +146,15 @@ workflow {
     // Pass each file in ref_paths to rfc_classify using one query file at a time
     rfClassify(params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 
+
     // Collect all individual output files into a single channel
+    auc = rfClassify.out.auc_channel
     f1_scores = rfClassify.out.f1_score_channel
 
+    plot_auc_dist(auc.flatten().toList())
+
     // Plot f1 score heatmaps using a list of file names from the f1 score channel
-    plot_results(params.ref_keys.join(' '), params.cutoff, f1_scores.flatten().toList()) 
+    plot_f1_results(params.ref_keys.join(' '), params.cutoff, f1_scores.flatten().toList()) 
 }
 
 workflow.onComplete {

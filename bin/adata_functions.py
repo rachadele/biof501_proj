@@ -113,9 +113,9 @@ def extract_data(data, filtered_ids, subsample=10, organism=None, census=None,
     #sc.pp.scale(adata)
     #sc.pp.highly_variable_genes(adata, n_top_genes=2000)
     #sc.tl.pca(adata, n_comps=dims)
-    sc.pp.neighbors(adata, use_rep="scvi",n_neighbors=30)
+    #sc.pp.neighbors(adata, use_rep="scvi",n_neighbors=30)
     #sc.tl.leiden(query)
-    sc.tl.umap(adata)
+    #sc.tl.umap(adata)
     # Merging metadata with dataset_info
     newmeta = adata.obs.merge(dataset_info, on="dataset_id", suffixes=(None,"y"))
     adata.obs = newmeta
@@ -252,9 +252,9 @@ def process_query(query, model_file_path, batch_key="sample"):
     #query.obs["dataset_title"] = dataset_title
 
     # Compute neighbors and UMAP
-    sc.pp.neighbors(query, n_neighbors=30, use_rep="scvi")
-    sc.tl.umap(query)
-    sc.tl.leiden(query)
+    #sc.pp.neighbors(query, n_neighbors=30, use_rep="scvi")
+    #sc.tl.umap(query)
+   # sc.tl.leiden(query)
 
     return query
 
@@ -465,7 +465,7 @@ def process_all_rocs(rocs):
                                 "query": query,
                                 "key": key, 
                                 "label": class_label, 
-                                "roc": class_data["auc"],
+                                "auc": class_data["auc"],
                                 "threshold": class_data["optimal_threshold"]
                               #   f'{var}': class_data[var]
                             })
@@ -486,7 +486,7 @@ def process_roc(rocs, ref_name, query_name):
                                 "query": query_name,
                                 "key": key, 
                                 "label": class_label, 
-                                "roc": class_data["auc"],
+                                "auc": class_data["auc"],
                                 "optimal threshold": class_data["optimal_threshold"]
                               #   f'{var}': class_data[var]
                             })
@@ -495,17 +495,26 @@ def process_roc(rocs, ref_name, query_name):
     roc_df = pd.DataFrame(data)
     return roc_df 
 
-def plot_distribution(df, projPath, var):
-    plt.figure(figsize=(8, 6))
-    sns.violinplot(data=df, x='label', y=var, palette="Set2")
+def plot_distribution(df, var, outdir):
+    # Set up the figure size
+    plt.figure(figsize=(15, 6))
+    # Create the violin plot with faceting by the 'query' column
+    sns.violinplot(data=df, y=var, x='label',palette="Set2")  #hue='query', split=False)
+    # Set the labels and title
     plt.xlabel('Key', fontsize=14)
     plt.ylabel(f"{var}", fontsize=14)
-    plt.title(f'Distribution of {var} across all References', fontsize=30)
+    plt.title(f'Distribution of {var} across all references', fontsize=20)
+    # Rotate x-axis labels for better readability
     plt.xticks(rotation=45, ha="right")
+    #plt.legend(title='Query', loc='upper right', bbox_to_anchor=(1, 1))
+    # Adjust layout to ensure everything fits
     plt.tight_layout()
-    save_path = os.path.join(projPath, "results", f"{var}_distribution.png")
+    # Save the plot as a PNG file
+    os.makedirs(outdir, exist_ok=True)
+    var=var.replace(" ","_")
+    save_path = os.path.join(outdir,f"{var}_distribution.png")
     plt.savefig(save_path)
-
+    # Show the plot
 
 def check_column_ties(probabilities, class_labels):
     """
@@ -681,7 +690,6 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
     save_path (str, optional): The file path to save the plot. If None, the plot is not saved.
     """
     import matplotlib.pyplot as plt
-    import numpy as np
 
     num_keys = len(metrics)
     plt.figure(figsize=(10, 8))
