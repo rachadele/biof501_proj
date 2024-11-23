@@ -806,9 +806,16 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
                 #linecolor='black',
                 annot_kws={"size": 10, "color": "black"},
             )
-            
+             # Explicitly set x-tick labels
+            axes[idx].set_xticks(range(len(pivot_df.columns)))  # Set positions
+            axes[idx].set_xticklabels(pivot_df.columns, rotation=90, fontsize=20)  # Set labels
+
+            # Explicitly set y-tick labels
+            axes[idx].set_yticks(range(len(pivot_df.index)))  # Set positions
+            axes[idx].set_yticklabels(pivot_df.index, fontsize=15)  # Set labels
+
             axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=90)
-            axes[idx].set_title(f'F1 Scores for {key} at threshold = {threshold:.2f}', fontsize=25)
+            axes[idx].set_title(f'F1 Scores for {key} at threshold = {threshold:.2f}', fontsize=30)
             axes[idx].set_ylabel('Reference', fontsize=30)
             axes[idx].set_xlabel('Label', fontsize=30)
 
@@ -841,11 +848,14 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
     # Plot the heatmap for the weighted F1 score
     sns.heatmap(pivot_f1, annot=True, cmap='YlOrRd', cbar_kws={'label': 'Weighted F1 Score'}, fmt='.3f', ax=ax)
     new_column_labels = [label[0] for label in pivot_f1.columns]
-    ax.set_xticklabels(new_column_labels, rotation=45, ha="right")
+    
+    ax.set_xticklabels(new_column_labels, rotation=45, ha="right", fontsize=20)
+    ax.set_yticklabels(pivot_df.index, fontsize=15)  # Set labels
+
     # Set the title and labels
     ax.set_title(f'Weighted F1 Score at threshold = {threshold:.2f}', fontsize=30)
-    ax.set_xlabel('Key and Query', fontsize=15)
-    ax.set_ylabel('Reference', fontsize=15)
+    ax.set_xlabel('Key and Query', fontsize=25)
+    ax.set_ylabel('Reference', fontsize=25)
     plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better readability
 
     plt.tight_layout()
