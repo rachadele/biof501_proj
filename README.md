@@ -49,7 +49,7 @@ Source functions for individual processes can be found in `/bin/adata_functions.
 ### Test data
 Toy datasets have been provided in the `refs` and `queries` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default. Setting a threshold is another challenging task, which for now is outside the scope of this pipeline.
 
-Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mappin manually. These harmonized labels are used for classification and evaluation.
+Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mapping manually. These harmonized labels are used for classification and evaluation.
 
 ## DAG
 ![Workflow DAG](./images/dag.png)
