@@ -27,20 +27,20 @@ Single-cell expression is a powerful tool for investigating cell-type-specific d
 
 ## Workflow description
 
-This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex in ALS patients and matched controls [4], while the references comprise 8 datasets from a popular "atlas" of multiple healthy human adult cortical areas [5]. The references have been pre-downloaded from the CellxGene Discover Census [6], and have pre-generated embeddings from a variational autoencoder model `scvi` [7] trained on all cells in the CellxGene data corpus. 
+This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex in ALS patients and matched controls [4], while the references comprise 8 datasets from a popular "atlas" of multiple healthy human adult cortical areas [5], as well as all 8 datasets aggregated (`whole cortex`). All libraries were prepared using 10x 3' v3 kits from 10x Genomics with the exception of denoted SMART-seq dataset [8][9]. The references have been pre-downloaded from the CellxGene Discover Census [6], and have pre-generated embeddings from a variational autoencoder model `scvi` [7] trained on all cells in the CellxGene data corpus. 
 
 ### Steps
 1. The pre-trained `scvi` model file is fetched given the organism and CellxGene census version
 2. The query data is passed through the pre-trained model.
 3. For each reference file provided, a random forest classifier fitted to the reference embeddings.
-   a. The classifier predicts probabilities for each query cell given embeddings from the pre-trained model passs at the most granular level.
-   b. The user can optionally filter the proabilities by a threshold.
-   c. ROC curves for each individual label are computed and plotted.
-   d. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
-   e. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
-   f. Cell metadata with predictions is written to `images/results/predicted_meta`.
-5. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
-6. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
+    1. The classifier predicts probabilities for each query cell given embeddings from the pre-trained model passs at the most granular level.
+    2.. The user can optionally filter the proabilities by a threshold.
+    3. ROC curves for each individual label are computed and plotted.
+    4. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
+    5. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
+    6. Cell metadata with predictions is written to `images/results/predicted_meta`.
+4. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
+5. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
 
 ### Source code 
 
@@ -108,5 +108,6 @@ nextflow v24.10.0
 5. Jorstad, Nikolas L., Jennie Close, Nelson Johansen, Anna Marie Yanny, Eliza R. Barkan, Kyle J. Travaglini, Darren Bertagnolli, et al. “Transcriptomic Cytoarchitecture Reveals Principles of Human Neocortex Organization.” Science 382, no. 6667 (October 13, 2023): eadf6812. https://doi.org/10.1126/science.adf6812.
 6. CZI Single-Cell Biology Program, Shibla Abdulla, Brian Aevermann, Pedro Assis, Seve Badajoz, Sidney M. Bell, Emanuele Bezzi, et al. “CZ CELL×GENE Discover: A Single-Cell Data Platform for Scalable Exploration, Analysis and Modeling of Aggregated Data,” November 2, 2023. https://doi.org/10.1101/2023.10.30.563174.
 7. Lopez, Romain, Jeffrey Regier, Michael B. Cole, Michael I. Jordan, and Nir Yosef. “Deep Generative Modeling for Single-Cell Transcriptomics.” Nature Methods 15, no. 12 (December 2018): 1053–58. https://doi.org/10.1038/s41592-018-0229-2.
-
+8. Chromium Single Cell V(D)J Reagent Kits with Feature Barcoding technology for Cell Surface Protein, Document Number CG000186 Rev A, 10x Genomics, (2019, July 25).
+9. Takara Bio USA, Inc. (n.d.). SMART-Seq® v4 Ultra® Low Input RNA Kit for Sequencing. 
 
