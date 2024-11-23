@@ -802,8 +802,8 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
                 cbar_kws={'label': 'F1 Score'}, 
                 mask=mask, 
                 ax=axes[idx], 
-                linewidths=0.5, 
-                linecolor='black',
+                linewidths=0, 
+                #linecolor='black',
                 annot_kws={"size": 10, "color": "black"},
             )
             
