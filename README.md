@@ -59,6 +59,9 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 ![](./images/results/dists/auc_distribution.png)
 ![](./images/results/dists/optimal_threshold_distribution.png)
 ![](./images/results/roc/optimal_threshold_distribution.png)
+
+see an example of the ROC curves for one query-reference combination:
+
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
 ## Repo Structure
