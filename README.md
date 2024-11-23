@@ -5,7 +5,7 @@
 running with defaults:
 
 ```
-nextflow main.nf
+nextflow main.nf -profile docker
 ```
 is equivalent to running:
 
@@ -14,8 +14,10 @@ nextflow main.nf
                -profile docker \
                --organism homo_sapiens \
                --census_version 2024-07-01
-               --cutoff 0 --queries queries/* \
-               --refs refs/* --relabel_q meta/gittings_relabel.tsv.gz \
+               --cutoff 0 \
+               --queries queries/* \
+               --refs refs/*
+               --relabel_q meta/gittings_relabel.tsv.gz \
                --relabel_r meta/census_map_human.tsv \
 ```
 
