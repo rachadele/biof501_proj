@@ -36,7 +36,7 @@ This pipeline evalutates a random forest classification task on a toy query data
    c. ROC curves for each individual label are computed and plotted.
    d. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
    e. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
-   f. Cell metadata with predictions is written to `/Users/Rachel/Documents/BIOF501/biof501_proj/images/results/predicted_meta`
+   f. Cell metadata with predictions is written to `images/results/predicted_meta`.
 5. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
 6. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
 
@@ -63,6 +63,8 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 
 ## Repo Structure
 
+Results will be published in the `results` directory. An example repo structure can be found under `images/results`.
+
 ## Container
 
 I have built a custom Docker container for use with this pipeline; its configuration can be found in `bin/Dockerfile` and `bin/requirements.txt`. The project directory is mounted to the base directory of the container via the config:
@@ -84,6 +86,8 @@ profiles {
 ```
 
 Reading `hdf5` formatted files can be memory intensive in Docker; I suggest keeping the memory limit and swap limit as is. Alternatively, to avoid running the Docker VM, you can create a conda environment with dependencies outlined in `requirements.txt` file and replace the path in the conda profile with the path to your environment. The workflow can then be run with `-profile conda`.
+
+## Versions
 
 ```
 docker v4.35.1
