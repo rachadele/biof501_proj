@@ -10,7 +10,13 @@ nextflow main.nf
 is equivalent to running:
 
 ```
-nextflow main.nf --organism homo_sapiens --census_version 2024-07-01 --cutoff 0 --queries queries/* --refs refs/* --relabel_q meta/gittings_relabel.tsv.gz --relabel_r meta/census_map_human.tsv
+nextflow main.nf
+               -profile docker \
+               --organism homo_sapiens \
+               --census_version 2024-07-01
+               --cutoff 0 --queries queries/* \
+               --refs refs/* --relabel_q meta/gittings_relabel.tsv.gz \
+               --relabel_r meta/census_map_human.tsv \
 ```
 
 ## Background
@@ -30,7 +36,8 @@ This pipeline evalutates a random forest classification task on a toy query data
    c. ROC curves for each individual label are computed and plotted.
    d. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
    e. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
-7. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
+4. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
+5. F1 scores are read from disk and plotted for all reference/query combindations as heatmaps.
 
 ### Source code 
 
@@ -42,8 +49,15 @@ Toy datasets have been provided in the `refs` and `queries` directories. These d
 Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mappin manually. These harmonized labels are used for classification and evaluation.
 
 ## DAG
+![Workflow DAG](./images/dag.png)
 
 ## Sample results
+![](./images/results/f1_plots/agg_f1_scores.png)
+![](./images/results/f1_plots/label_f1_scores.png)
+
+![](./images/results/dists/auc_distribution.png)
+![](./images/results/roc/optimal_threshold_distribution.png)
+![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
 ## Repo Structure
 
@@ -52,13 +66,22 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 I have built a custom Docker container for use with this pipeline; its configuration can be found in `bin/Dockerfile` and `bin/requirements.txt`. The project directory is mounted to the base directory of the container via the config:
 
 ```
- docker { 
-  	enabled = true
-        runOptions = "-v $projectDir:/biof501_proj$projectDir -m 8g --memory-swap -1"
-        temp = 'auto'
-   }	 
+profiles {
+  conda {
+    conda.enabled=true
+    process.conda = '/Users/Rachel/miniconda3/envs/censusenv'
+   }
+
+  docker {
+    process.container = 'raschwaa/census-pipeline:latest'
+    docker.enabled = true
+    runOptions = "-v $projectDir:/biof501_proj$projectDir -m 8g --memory-swap -1"
+    temp = 'auto'
+  }
+}
 ```
-Reading `hdf5` formatted files can be memory intensive; I suggest keeping the memory limit and swap limit as is. 
+
+Reading `hdf5` formatted files can be memory intensive in Docker; I suggest keeping the memory limit and swap limit as is. Alternatively, to avoid running the Docker VM, you can create a conda environment with dependencies outlined in `requirements.txt` file and replace the path in the conda profile with the path to your environment. The workflow can then be run with `-profile conda`.
 
 ```
 docker v4.35.1
