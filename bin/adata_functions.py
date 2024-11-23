@@ -815,9 +815,9 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
             axes[idx].set_yticklabels(pivot_df.index, fontsize=15)  # Set labels
 
             axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=90)
-            axes[idx].set_title(f'F1 Scores for {key} at threshold = {threshold:.2f}', fontsize=30)
-            axes[idx].set_ylabel('Reference', fontsize=30)
-            axes[idx].set_xlabel('Label', fontsize=30)
+            axes[idx].set_title(f'F1 Scores for {key} at threshold = {threshold:.2f}', fontsize=25)
+            axes[idx].set_ylabel('Reference', fontsize=25)
+            axes[idx].set_xlabel('Label', fontsize=25)
 
     # Adjust layout to avoid overlap
     plt.tight_layout()
@@ -853,7 +853,7 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
     ax.set_yticklabels(pivot_df.index, fontsize=15)  # Set labels
 
     # Set the title and labels
-    ax.set_title(f'Weighted F1 Score at threshold = {threshold:.2f}', fontsize=30)
+    ax.set_title(f'Weighted F1 Score at threshold = {threshold:.2f}', fontsize=25)
     ax.set_xlabel('Key and Query', fontsize=25)
     ax.set_ylabel('Reference', fontsize=25)
     plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better readability
