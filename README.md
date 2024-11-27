@@ -87,7 +87,7 @@ Fig 3-4. Distribution of AUC and optimal threshold (Youden's J statistic) across
 
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
-Fig 5. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination. We can see that at low threshold, we don't detect any true positives for PVALB interneurons (this is why F1 is 0 for most references). This behavior is unexpected, as 0 is the most sensitive our cutoff can be.
+Fig 5. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination. These ROC and AUC scores dont' account forthe multi-class nature of our classification problem– for example, although PVALB interneurons can be detected when labels are binarized, because Chandielier neurons achieve higher probabilities, they typically aren't classified correctly in our final classification report.
 
 ## Container
 
