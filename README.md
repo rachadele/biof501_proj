@@ -87,7 +87,7 @@ Fig 3-4. Distribution of AUC and optimal threshold (Youden's J statistic) across
 
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
-Fig 5.
+Fig 5. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination.
 
 ## Container
 
