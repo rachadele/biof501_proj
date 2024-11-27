@@ -666,9 +666,9 @@ def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir)
 
     # Plot the confusion matrix
     plt.figure(figsize=(20, 15))
-    sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels)
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
+    sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels, annot_kws={"size": 16})
+    plt.xlabel('Predicted', fontsize =20)
+    plt.ylabel('True', fontsize= 20)
     plt.title(f'Confusion Matrix: {query_name} vs {ref_name} - {key}')
     
     # Save the plot
