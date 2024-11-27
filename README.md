@@ -79,15 +79,15 @@ Fig 1. Aggregated F1 scores weighted by class for each level of cell type hierar
 Fig 2. F1 scores by class at 3 levels of hierarchy.
 Primary somatosensory cortex, wole cortex and angular gyrus achieve the highest weighted F1 for our test data. Endothelial cells, deep layer non-IT excitatory neurons, and PVALB interneurons are the most difficult to predict in our test data. Considerations forwhich reference to use should be informed by what cell type we're most interested in.
 
-![](./images/results/dists/auc_distribution.png)
-![](./images/results/dists/optimal_threshold_distribution.png)
-
-Fig 3-4. Distribution of AUC and optimal threshold (Youden's J statistic) across references per class. Classes with the highest optimal thresholds (L5 ET, Microglia, OPC, Oligodendrocyte) all achieve perfect AUC. We can reasonbly set the threshold to something low, like 0.2, since this is around the median of the remaining classes. Alternatively, a mean or median threhsold can be computed from results in `images/results/roc`.
-
 
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
-Fig 5. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination. These ROC and AUC scores dont' account forthe multi-class nature of our classification problem– for example, although PVALB interneurons can be detected when labels are binarized, because Chandielier neurons achieve higher probabilities, they typically aren't classified correctly in our final classification report.
+Fig 3. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination. These ROC and AUC scores dont' account forthe multi-class nature of our classification problem– for example, although PVALB interneurons can be detected when labels are binarized, because Chandielier neurons achieve higher probabilities, they typically aren't classified correctly in our final classification report. One way around this would be to alter the code to provide a vector of thresholds for each class, so that classes which tend to have higher optimal thresholds can't influence classes with lower optimal thresholds.
+
+![](./images/results/dists/auc_distribution.png)
+![](./images/results/dists/optimal_threshold_distribution.png)
+
+Fig 4-5. Distribution of AUC and optimal threshold (Youden's J statistic) across references per class. Classes with the highest optimal thresholds (L5 ET, Microglia, OPC, Oligodendrocyte) all achieve perfect AUC. Since this workflow doesn't permit passing a vector of thresholds, we may want to set the threshold to something in the middle, to avoid falsely classifying groups with low optimal thresholds as one of these classes. Alternatively, a mean or median threshold can be computed from results in `images/results/roc`. 
 
 ## Container
 
