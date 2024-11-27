@@ -74,15 +74,20 @@ Results will be published in the `results` directory. An example repo structure 
 ![](./images/results/f1_plots/agg_f1_scores.png)
 ![](./images/results/f1_plots/label_f1_scores.png)
 
+Fig 1. Aggregated F1 scores weighted by class for each level of cell type hierarhcy. 
+
+Fig 2. F1 scores by class at 3 levels of hierarchy.
+Primary somatosensory cortex, wole cortex and angular gyrus achieve the highest weighted F1 for our test data. Endothelial cells, deep layer non-IT excitatory neurons, and PVALB interneurons are the most difficult to predict in our test data. Considerations forwhich reference to use should be informed by what cell type we're most interested in.
+
 ![](./images/results/dists/auc_distribution.png)
 ![](./images/results/dists/optimal_threshold_distribution.png)
-![](./images/results/roc/optimal_threshold_distribution.png)
 
-see an example of the ROC curves for one query-reference combination:
+Fig 3-4. Distribution of AUC and optimal threshold (Youden's J statistic) across references per class. Classes with the highest optimal thresholds (L5 ET, Microglia, OPC, Oligodendrocyte) all achieve perfect AUC. We can reasonbly set the threshold to something low, like 0.2, since this is around the median of the remaining classes. Alternatively, a mean or median threhsold can be computed from results in `images/results/roc`.
+
 
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
-
+Fig 5.
 
 ## Container
 
