@@ -657,20 +657,27 @@ def update_classification_report(class_metrics, ref_keys):
     return class_metrics
 
 def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir):
-    new_query_name = query_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
-    new_ref_name = ref_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
+    
+    #new_query_name = query_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
+    #new_ref_name = ref_name.replace(" ", "_").replace("/", "_").replace("(","").replace(")","")
                
     # Extract confusion matrix and labels from the confusion data
     conf_matrix = confusion_data["matrix"]
     labels = confusion_data["labels"]
 
     # Plot the confusion matrix
-    plt.figure(figsize=(20, 15))
-    sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels, annot_kws={"size": 16})
+    plt.figure(figsize=(28, 12))
+    sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels, annot_kws={"size": 20})
     plt.xlabel('Predicted', fontsize =20)
     plt.ylabel('True', fontsize= 20)
-    plt.title(f'Confusion Matrix: {query_name} vs {ref_name} - {key}')
-    
+    plt.title(f'Confusion Matrix: {query_name} vs {ref_name} - {key}', fontsize=17)
+    # Adjust tick parameters for both axes
+    #plt.tick_params(axis='both', which='major', labelsize=15, width=1)  # Increase tick label size and make ticks thicker
+
+    # Rotate both x and y tick labels by 90 degrees
+    plt.xticks(rotation=45, fontsize=15)  # Rotate x-axis labels by 90 degrees
+    plt.yticks(rotation=45, fontsize=15)  # Rotate y-axis labels by 90 degrees
+
     # Save the plot
    # output_dir = os.path.join(projPath, 'results', 'confusion')
     
@@ -721,7 +728,7 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
         # Plot the reference line (random classifier)
         plt.plot([0, 1], [0, 1], 'k--', lw=2)
 
-        plt.xlabel('False Positive Rate')
+        plt.xlabel('Sensitivity')
         plt.ylabel('True Positive Rate')
         plt.legend(loc='lower right')
         plt.grid(True)
@@ -807,11 +814,11 @@ def plot_f1_heatmaps(all_f1_scores, threshold, outpath, ref_keys):
                 annot_kws={"size": 10, "color": "black"},
             )
              # Explicitly set x-tick labels
-            axes[idx].set_xticks(range(len(pivot_df.columns)))  # Set positions
+            #axes[idx].set_xticks(range(len(pivot_df.columns)))  # Set positions
             axes[idx].set_xticklabels(pivot_df.columns, rotation=90, fontsize=20)  # Set labels
 
             # Explicitly set y-tick labels
-            axes[idx].set_yticks(range(len(pivot_df.index)))  # Set positions
+            #axes[idx].set_yticks(range(len(pivot_df.index)))  # Set positions
             axes[idx].set_yticklabels(pivot_df.index, fontsize=15)  # Set labels
 
             axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=90)
