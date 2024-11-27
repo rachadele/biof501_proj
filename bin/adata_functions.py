@@ -435,8 +435,8 @@ def roc_analysis(probabilities, query, key, specified_threshold=None):
             # True label one hot encoding at class label index = 
             # vector of all cells which are either 1 = label or 0 = not label
             # probs = probability vector for all cells given class label
-            fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i])
-            roc_auc = auc(fpr, tpr)                
+            fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i]) 
+            roc_auc = auc(fpr, tpr) # change to roc_auc_score, ovo, average= macro, labels               
             optimal_idx = np.argmax(tpr - fpr)
             optimal_threshold = thresholds[optimal_idx]
             if optimal_threshold == float('inf'):
@@ -728,7 +728,7 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
         # Plot the reference line (random classifier)
         plt.plot([0, 1], [0, 1], 'k--', lw=2)
 
-        plt.xlabel('Sensitivity')
+        plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         plt.legend(loc='lower right')
         plt.grid(True)
