@@ -10,7 +10,7 @@ import scvi
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score, roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from collections import defaultdict
 import seaborn as sns
@@ -107,7 +107,7 @@ def extract_data(data, filtered_ids, subsample=10, organism=None, census=None,
     sc.pp.filter_genes(adata, min_cells=3) 
     print("Subsampling successful.")
     # Filter out genes that are not expressed in at least 3 cells
-    #adata = adata[adata.X.sum(axis=0) >= 3, :]
+
     # Preprocessing
     #sc.pp.normalize_total(adata)
     #sc.pp.scale(adata)
@@ -400,7 +400,7 @@ def rfc_pred(ref, query, ref_keys):
 
 
 
-def roc_analysis(probabilities, query, key, specified_threshold=None):
+def roc_analysis(probabilities, query, key):
     optimal_thresholds = {}
     metrics={}
   #  for key in ref_keys:
@@ -515,6 +515,7 @@ def plot_distribution(df, var, outdir):
     save_path = os.path.join(outdir,f"{var}_distribution.png")
     plt.savefig(save_path)
     # Show the plot
+
 
 def check_column_ties(probabilities, class_labels):
     """
@@ -685,8 +686,6 @@ def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir)
     plt.savefig(os.path.join(output_dir,f"{key}_confusion.png"))
     plt.close() 
 
-
-
 def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_path=None):
     """
     Plots ROC curves for each class at each key level from the metrics dictionary on the same figure.
@@ -741,9 +740,7 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
         plt.savefig(save_path, bbox_inches='tight')
         print(f"Plot saved to {save_path}")
     
-
-
-
+    
 def combine_f1_scores(class_metrics, ref_keys):
    # metrics = class_metrics
     # Dictionary to store DataFrames for each key
@@ -770,8 +767,9 @@ def combine_f1_scores(class_metrics, ref_keys):
                                     'f1_score': metrics['f1-score'],                         
                                     'macro_f1': classification_report.get('macro avg', {}).get('f1-score', None),
                                     'micro_f1': classification_report.get('micro avg', {}).get('f1-score', None),
-                                    'weighted_f1': classification_report.get('weighted avg', {}).get('f1-score', None)#,
-                                   # 'accuracy': classification_report.get('accuracy', )
+                                    'weighted_f1': classification_report.get('weighted avg', {}).get('f1-score', None), #,
+                                    'precision': metrics['precision'],
+                                    'recall': metrics['recall']        
                                 })
 
         # Create DataFrame for the current key
