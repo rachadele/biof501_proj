@@ -10,7 +10,7 @@ import scvi
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score, roc_curve, auc
+from sklearn.metrics import *
 from sklearn.preprocessing import label_binarize
 from collections import defaultdict
 import seaborn as sns
@@ -435,7 +435,7 @@ def roc_analysis(probabilities, query, key):
             # True label one hot encoding at class label index = 
             # vector of all cells which are either 1 = label or 0 = not label
             # probs = probability vector for all cells given class label
-            fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i]) 
+            fpr, tpr, thresholds = roc_curve(true_labels[:, i], probs[:, i])
             roc_auc = auc(fpr, tpr) # change to roc_auc_score, ovo, average= macro, labels               
             optimal_idx = np.argmax(tpr - fpr)
             optimal_threshold = thresholds[optimal_idx]
@@ -695,19 +695,12 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
     title (str): The title of the plot.
     save_path (str, optional): The file path to save the plot. If None, the plot is not saved.
     """
-    import matplotlib.pyplot as plt
-
-    num_keys = len(metrics)
-    plt.figure(figsize=(10, 8))
-    plt.suptitle(title, fontsize=25)
+    fig, ax = plt.subplots(figsize=(10, 8))  # Create a figure and axis
 
     # Create a subplot for each key
-    for idx, key in enumerate(metrics.keys()):
-        plt.subplot(num_keys, 1, idx + 1)
-        plt.title(f"ROC Curves for {key}")
-        
-        # Plot ROC curves for each class under the current key
+    for key in metrics:
         for class_label in metrics[key]:
+
             if isinstance(metrics[key][class_label], dict):
                 if all(k in metrics[key][class_label] for k in ["tpr", "fpr", "auc"]):
                     tpr = metrics[key][class_label]["tpr"]
@@ -720,22 +713,28 @@ def plot_roc_curves(metrics, title="ROC Curves for All Keys and Classes", save_p
                     optimal_tpr = tpr[optimal_idx]
 
                     # Plot the ROC curve for the current class
-                    plt.plot(fpr, tpr, lw=2, label=f"Class {class_label} (AUC = {roc_auc:.3f})")
+                    #plt.plot(fpr, tpr, lw=2, label=f"Class {class_label} (AUC = {roc_auc:.3f})")
+                 #   curve = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=class_label) #drop_intermediate=False)
+                   # curve.plot(ax=ax)  # Add to the shared axis
+                    
+                    ax.step(fpr, tpr, where='post', lw=2, label=f"{key}: {class_label} (AUC = {roc_auc:.3f})")
+
                     # Plot the optimal threshold as a point
-                    plt.scatter(optimal_fpr, optimal_tpr, color='red', marker='o')
+                    ax.scatter(optimal_fpr, optimal_tpr, color='red', marker='o') 
+                          #  label=f"Optimal Threshold (Class {class_label})")
+                    
+    # Plot the reference line (random classifier)
+    ax.plot([0, 1], [0, 1], 'k--', lw=2, label="Random Classifier")
 
-        # Plot the reference line (random classifier)
-        plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    # Add title, labels, legend, and grid
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel('False Positive Rate', fontsize = 15)
+    ax.set_ylabel('True Positive Rate', fontsize = 15)
+    ax.legend(loc='lower right', fontsize='medium')
+    ax.grid(True)
 
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.legend(loc='lower right')
-        plt.grid(True)
-
-    # Adjust the layout to avoid overlap
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    
-    # Save the plot to the given path if provided
+    # Adjust layout and save the plot if a path is provided
+    plt.tight_layout()
     if save_path:
         plt.savefig(save_path, bbox_inches='tight')
         print(f"Plot saved to {save_path}")
