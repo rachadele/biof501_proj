@@ -38,6 +38,8 @@ def parse_arguments():
     parser.add_argument('--relabel_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/meta/gittings_relabel.tsv.gz")
     parser.add_argument('--query_path', type=str, default="/space/grp/rschwartz/rschwartz/biof501_proj/queries/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains.h5ad")
     parser.add_argument('--batch_key', type=str, default="sample")
+    parser.add_argument('--join_key', type=str, default="observation_joinid") 
+
     if __name__ == "__main__":
         known_args, _ = parser.parse_known_args()
         return known_args
@@ -56,9 +58,10 @@ def main():
   query_path =args.query_path
   relabel_path=args.relabel_path
   batch_key=args.batch_key
+  join_key = args.join_key
   
   query = ad.read_h5ad(query_path)
-  query = relabel(query,relabel_path=relabel_path, join_key="observation_joinid",sep="\t")
+  query = relabel(query,relabel_path=relabel_path, join_key=join_key,sep="\t")
   query = process_query(query, model_path, batch_key)
   new_query_name = os.path.basename(query_path).replace(".h5ad","_processed")
   query.write_h5ad(f"{new_query_name}.h5ad")

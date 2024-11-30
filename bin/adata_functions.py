@@ -667,7 +667,7 @@ def plot_confusion_matrix(query_name, ref_name, key, confusion_data, output_dir)
     labels = confusion_data["labels"]
 
     # Plot the confusion matrix
-    plt.figure(figsize=(28, 12))
+    plt.figure(figsize=(28, 18))
     sns.heatmap(conf_matrix, annot=True, fmt='g', cmap='Reds', xticklabels=labels, yticklabels=labels, annot_kws={"size": 20})
     plt.xlabel('Predicted', fontsize =20)
     plt.ylabel('True', fontsize= 20)

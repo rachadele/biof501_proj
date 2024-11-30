@@ -21,6 +21,7 @@ process mapQuery {
     path relabel_q
     path query_file
     val batch_key
+    val join_key
 
     output:
     path "${query_file.toString().replace('.h5ad','_processed.h5ad')}"
@@ -33,7 +34,8 @@ python $projectDir/bin/process_query.py \\
                         --model_path ${model_path} \\
                         --relabel_path ${relabel_q} \\
                         --query_path ${query_file} \\
-                        --batch_key ${batch_key}
+                        --batch_key ${batch_key} \\
+                        --join_key ${join_key}
 """
 
 }
@@ -141,7 +143,7 @@ workflow {
     // .collect() 
     .set { ref_paths }
     
-    processed_queries = mapQuery(model_path, params.relabel_q, query_paths, params.batch_key) 
+    processed_queries = mapQuery(model_path, params.relabel_q, query_paths, params.batch_key, params.join_key) 
 
     // Pass each file in ref_paths to rfc_classify using one query file at a time
     rfClassify(params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
