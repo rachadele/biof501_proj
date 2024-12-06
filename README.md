@@ -66,7 +66,7 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 
 ### Repo Structure
 
-Results will be published in the `results` directory. An example repo structure can be found under `images/results`. These include tab-separated files containing cell type predictions, raw probability vectors for each query cell, AUC and Youden's J statistics for each cell type, F1 scores for each cell type and weighted F1 scores. Because predictions for less granular levels are aggregated from the `rachel_subclass` level, ROC and Youden's J ccan only be computed for `rachel subclass`.
+Results will be published in the `results` directory. An example repo structure can be found under `images/results`. These include tab-separated files containing cell type predictions, raw probability vectors for each query cell, AUC and Youden's J statistics for each cell type, F1 scores for each cell type and weighted F1 scores. Because predictions for less granular levels are aggregated from the `rachel_subclass` level, ROC and Youden's J ccan only be computed for `rachel subclass`. There are too many results to display here as a directory tree structure; directory names are named accordingly to help the user find sample results.
 
 Plots include:
 1. ROC curves for each cell type in `/images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed`
