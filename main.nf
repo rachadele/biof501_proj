@@ -136,17 +136,17 @@ workflow {
     // Call the setup process to download the model
     model_path = runSetup(params.organism, params.census_version)
 
-    Channel.fromPath(params.queries)
+    Channel.fromPath(params.query)
     .set{ query_paths }
 
     Channel.fromPath(params.refs)
     // .collect() 
     .set { ref_paths }
     
-    processed_queries = mapQuery(model_path, params.relabel_q, query_paths, params.batch_key, params.join_key) 
+    processed_query = mapQuery(model_path, params.relabel_q, query_paths, params.batch_key, params.join_key) 
 
     // Pass each file in ref_paths to rfc_classify using one query file at a time
-    rfClassify(params.tree_file, processed_queries.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
+    rfClassify(params.tree_file, processed_query.first(), ref_paths, params.ref_keys.join(' '), params.cutoff)
 
 
     // Collect all individual output files into a single channel
