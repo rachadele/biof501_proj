@@ -15,7 +15,7 @@ nextflow main.nf
                --organism homo_sapiens \
                --census_version 2024-07-01
                --cutoff 0 \
-               --queries queries/* \
+               --query query/* \
                --refs refs/*
                --relabel_q meta/gittings_relabel.tsv.gz \
                --relabel_r meta/census_map_human.tsv \
@@ -58,7 +58,7 @@ This pipeline evalutates a random forest classification task on a toy query data
 Source functions for individual processes can be found in `/bin/adata_functions.py`. Scripts used to download reference and query data are likewise avaialable in `/bin`.
 
 ## Inputs
-Toy datasets have been provided in the `refs` and `queries` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default. Setting a threshold is another challenging task, which for now is outside the scope of this pipeline.
+Toy datasets have been provided in the `refs` and `query` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default. Setting a threshold is another challenging task, which for now is outside the scope of this pipeline.
 
 Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mapping manually. These harmonized labels are used for classification and evaluation.
 
