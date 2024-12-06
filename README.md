@@ -70,10 +70,10 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 Results will be published in the `results` directory. An example repo structure can be found under `images/results`. These include tab-separated files containing cell type predictions, raw probability vectors for each query cell, AUC and Youden's J statistics for each cell type, F1 scores for each cell type and weighted F1 scores. 
 
 Plots include:
-1. ROC curves for each cell type in ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed)
-2. Confusion matrices for predictions at each level in ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed)
-3. F1 scores in ![](./images/results/f1_plots/)
-4. Distribution of auc and youden's J in ![](./images/results/dists)
+1. ROC curves for each cell type in `/images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed`
+2. Confusion matrices for predictions at each level in `/images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed`
+3. F1 scores in `/images/results/f1_plots/`
+4. Distribution of auc and youden's J in `/images/results/dists`
 
 ### Sample results
 
