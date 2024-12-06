@@ -80,15 +80,15 @@ Plots include:
 ![](./images/results/f1_plots/agg_f1_scores.png)
 ![](./images/results/f1_plots/label_f1_scores.png)
 
-Fig 1. Aggregated F1 scores weighted by class for each level of cell type hierarhcy. 
+Fig 1. Aggregated F1 scores weighted by class for each level of cell type hierarchy. 
 
 Fig 2. F1 scores by class at 3 levels of hierarchy.
-Primary somatosensory cortex, wole cortex and angular gyrus achieve the highest weighted F1 for our test data. Endothelial cells, deep layer non-IT excitatory neurons, and PVALB interneurons are the most difficult to predict in our test data. Considerations forwhich reference to use should be informed by what cell type we're most interested in.
+Primary somatosensory cortex, wole cortex and angular gyrus achieve the highest weighted F1 for our test data. Endothelial cells, deep layer non-IT excitatory neurons, and PVALB interneurons are the most difficult to predict in our test data. Considerations for which reference to use should be informed by what cell type we're most interested in.
 
 
 ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/roc_results.png)
 
-Fig 3. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination. These ROC and AUC scores dont' account forthe multi-class nature of our classification problem– for example, although PVALB interneurons can be detected when labels are binarized, because Chandielier neurons achieve higher probabilities, they typically aren't classified correctly in our final classification report. One way around this would be to alter the code to provide a vector of thresholds for each class, so that classes which tend to have higher optimal thresholds can't influence classes with lower optimal thresholds.
+Fig 3. Visualization of ROC and optimal threhsold (red point) for a given reference-query combination. These ROC and AUC scores don't account forthe multi-class nature of our classification problem– for example, although PVALB interneurons can be detected when labels are binarized, because Chandielier neurons achieve higher probabilities, they typically aren't classified correctly in our final classification report. One way around this would be to alter the code to provide a vector of thresholds for each class, so that classes which tend to have higher optimal thresholds can't influence classes with lower optimal thresholds.
 
 ![](./images/results/dists/auc_distribution.png)
 ![](./images/results/dists/optimal_threshold_distribution.png)
