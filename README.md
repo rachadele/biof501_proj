@@ -97,7 +97,7 @@ Fig 4-5. Distribution of AUC and optimal threshold (Youden's J statistic) across
 
  ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/rachel_class_confusion.png)
 
- Fig 6. A sample confusion matrix for predictions from a classifier trained on embeddings on `Dissection: Angular gyrus AnG` from [5] at the intermediate level or granularity. Harmonized labels were stored in the `rachel_class` column to distinguish from original class labels).
+ Fig 6. A sample confusion matrix for predictions from a classifier trained on embeddings from `Dissection: Angular gyrus AnG` [5] at the intermediate level or granularity (`rachel_class`).
  
 ## Container
 
