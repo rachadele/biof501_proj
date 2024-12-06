@@ -95,6 +95,9 @@ Fig 3. Visualization of ROC and optimal threhsold (red point) for a given refere
 
 Fig 4-5. Distribution of AUC and optimal threshold (Youden's J statistic) across references per class. Classes with the highest optimal thresholds (L5 ET, Microglia, OPC, Oligodendrocyte) all achieve perfect AUC. Since this workflow doesn't permit passing a vector of thresholds, we may want to set the threshold to something in the middle, to avoid falsely classifying groups with low optimal thresholds as one of these classes. Alternatively, a mean or median threshold can be computed from results in `images/results/roc`. 
 
+ ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG)
+
+ Fig 6. A sample confusion matrix for predictions from a classifier trained on embeddings on `Dissection: Angular gyrus AnG` from [5].
 ## Container
 
 I have built a custom Docker container for use with this pipeline; its configuration can be found in `bin/Dockerfile` and `bin/requirements.txt`. The project directory is mounted to the base directory of the container via the config:
@@ -122,7 +125,7 @@ Reading `hdf5` formatted files can be memory intensive in Docker; I suggest keep
 ## References
 
 1. Puntambekar S, Hesselberth JR, Riemondy KA, Fu R. Cell-level metadata are indispensable for documenting single-cell sequencing datasets. Koo BK, editor. PLoS Biol. 2021 May 4;19(5):e3001077.
-2. Pasquini G, Rojo Arias JE, Schäfer P, Busskamp V. Automated methods for cell type annotation on scRNA-seq data. Computational and Structural Biotechnology Journal. 2021;19:961–9.
+2. Pasquini G, Rojo Arias JE, Schäfer P, Busskamp V. Automated methods for cell type annotation on scRNA-seq data. Computational and Structural Biotechnology Journal. 2021;19:961–
 3. Lotfollahi, Mohammad, Yuhan Hao, Fabian J. Theis, and Rahul Satija. “The Future of Rapid and Automated Single-Cell Data Analysis Using Reference Mapping.” Cell 187, no. 10 (May 2024): 2343–58. https://doi.org/10.1016/j.cell.2024.03.009.
 4. Gittings, L.M., Alsop, E.B., Antone, J. et al. Cryptic exon detection and transcriptomic changes revealed in single-nuclei RNA sequencing of C9ORF72 patients spanning the ALS-FTD spectrum. Acta Neuropathol 146, 433–450 (2023). https://doi.org/10.1007/s00401-023-02599-5
 5. Jorstad, Nikolas L., Jennie Close, Nelson Johansen, Anna Marie Yanny, Eliza R. Barkan, Kyle J. Travaglini, Darren Bertagnolli, et al. “Transcriptomic Cytoarchitecture Reveals Principles of Human Neocortex Organization.” Science 382, no. 6667 (October 13, 2023): eadf6812. https://doi.org/10.1126/science.adf6812.
