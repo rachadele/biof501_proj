@@ -36,7 +36,7 @@ Single-cell expression is a powerful tool for investigating cell-type-specific d
 
 ### Workflow description
 
-This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex in ALS patients and matched controls [4], while the references comprise 8 datasets from a popular "atlas" of multiple healthy human adult cortical areas [5], as well as all 8 datasets aggregated (`whole cortex`). All libraries were prepared using 10x 3' v3 kits from 10x Genomics with the exception of denoted SMART-seq dataset [8][9]. The references have been pre-downloaded from the CellxGene Discover Census [6], and have pre-generated embeddings from a variational autoencoder model `scvi` [7] trained on all cells in the CellxGene data corpus. 
+This pipeline evalutates a random forest classification task on a toy query dataset given 8 reference datasets with a 3-level cell type hierarchy. The test or "query" data comes from a study of human adult prefrontal cortex in Amyotrophic lateral sclerosis (ALS) patients and matched controls [4], while the references comprise 8 datasets from a popular "atlas" of multiple healthy human adult cortical areas [5], as well as all 8 datasets aggregated (`whole cortex`). All libraries were prepared using 10x 3' v3 kits from 10x Genomics with the exception of one SMART-seq dataset [8][9]. The references have been pre-downloaded from the CellxGene Discover Census [6], and have pre-generated embeddings from a variational autoencoder model `scvi` [7] trained on all cells in the CellxGene data corpus. 
 
 ### Steps
 1. The pre-trained `scvi` model file is fetched given the organism and CellxGene census version
@@ -67,7 +67,13 @@ Importantly, during the pipeline run, query and reference data are mapped to a s
 
 ### Repo Structure
 
-Results will be published in the `results` directory. An example repo structure can be found under `images/results`. These include cell type predictions, F1 scores for each cell type, weighted F1 scores, AUC values, Youden's J statistics, and associated figures.
+Results will be published in the `results` directory. An example repo structure can be found under `images/results`. These include tab-separated files containing cell type predictions, raw probability vectors for each query cell, AUC and Youden's J statistics for each cell type, F1 scores for each cell type and weighted F1 scores. 
+
+Plots include:
+1. ROC curves for each cell type in ![](./images/results/roc/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed)
+2. Confusion matrices for predictions at each level in ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed)
+3. F1 scores in ![](./images/results/f1_plots/)
+4. Distribution of auc and youden's J in ![](./images/results/dists)
 
 ### Sample results
 
