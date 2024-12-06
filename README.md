@@ -95,7 +95,7 @@ Fig 3. Visualization of ROC and optimal threhsold (red point) for a given refere
 
 Fig 4-5. Distribution of AUC and optimal threshold (Youden's J statistic) across references per class. Classes with the highest optimal thresholds (L5 ET, Microglia, OPC, Oligodendrocyte) all achieve perfect AUC. Since this workflow doesn't permit passing a vector of thresholds, we may want to set the threshold to something in the middle, to avoid falsely classifying groups with low optimal thresholds as one of these classes. Alternatively, a mean or median threshold can be computed from results in `images/results/roc`. 
 
- ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/rachel_class.png)
+ ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/rachel_class_confusion.png)
 
  Fig 6. A sample confusion matrix for predictions from a classifier trained on embeddings on `Dissection: Angular gyrus AnG` from [5] at the `class` level (`rachel_class` to distinguish from original class labels).
 ## Container
