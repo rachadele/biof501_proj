@@ -60,7 +60,7 @@ Source functions for individual processes can be found in `/bin/adata_functions.
 ## Inputs
 Toy datasets have been provided in the `refs` and `query` directories. These data are downsampled to comply with Github and Docker's memory requirements. As such, the evaluation may not be an accurate assessment of classification performance. The threshold has been set to `0` by default. Setting a threshold is another challenging task, which for now is outside the scope of this pipeline.
 
-Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mapping manually. These harmonized labels are used for classification and evaluation.
+Importantly, during the pipeline run, query and reference data are mapped to a shared "ground truth" set of hierarchical labels defined in `meta.master_hierarchy.json`. I have generated the mapping files (`census_map_human.tsv` and `gittings_relabel.tsv`) for the purposes of this demo, but a user-supplied query would need to perform this mapping manually. These harmonized labels are used for classification and evaluation. Harmonized levels of granularity or `rachel_subclass` with 17 cell types, `rachel_Class` with 12 cell types, and `rachel_family` with three cell types.
 
 
 ## Output
@@ -97,7 +97,8 @@ Fig 4-5. Distribution of AUC and optimal threshold (Youden's J statistic) across
 
  ![](./images/results/confusion/Frontal_cortex_samples_from_C9-ALS,_C9-ALS_FTD_and_age_matched_control_brains_processed/Dissection:_Angular_gyrus_AnG/rachel_class_confusion.png)
 
- Fig 6. A sample confusion matrix for predictions from a classifier trained on embeddings on `Dissection: Angular gyrus AnG` from [5] at the `class` level (`rachel_class` to distinguish from original class labels).
+ Fig 6. A sample confusion matrix for predictions from a classifier trained on embeddings on `Dissection: Angular gyrus AnG` from [5] at the intermediate level or granularity. Harmonized labels were stored in the `rachel_class` column to distinguish from original class labels).
+ 
 ## Container
 
 I have built a custom Docker container for use with this pipeline; its configuration can be found in `bin/Dockerfile` and `bin/requirements.txt`. The project directory is mounted to the base directory of the container via the config:
