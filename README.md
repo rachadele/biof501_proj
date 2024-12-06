@@ -44,7 +44,7 @@ This pipeline evalutates a random forest classification task on a toy query data
 3. For each reference file provided, a random forest classifier fitted to the reference embeddings.
     1. The classifier predicts probabilities for each query cell given embeddings from the pre-trained model passs at the most granular level. The user can optionally filter the proabilities by a threshold, under which cells are classified as 'unknown'.
     2. ROC curves for each individual label are computed and plotted.
-    3. predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
+    3. Predictions aggregated using the cell type hierarchy tree into broader labels. This ensures that granular predictions correspond to their higher-level predictions, which may not be the case if we fit a classifier separately at each level.
     5. A classification report is generated for each set of predictions. F1 scores are saved to disk. Confusion matrices are plotted for each label.
     6. Cell metadata with predictions is written to `images/results/predicted_meta`.
 4. The distribution of AUC scores and Youden's J statistics (the `optimal threshold` are plotted across all reference/combinations.
